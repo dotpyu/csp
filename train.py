@@ -116,12 +116,19 @@ def save_soft_embeddings(model, config, epoch=None):
             soft_emb_path = os.path.join(
                 config.save_path, f"soft_embeddings_epoch_{epoch}.pt"
             )
+            vctx_path = os.path.join(
+                config.save_path, f"vctx_epoch_{epoch}.pt"
+            )
         else:
             soft_emb_path = os.path.join(
                 config.save_path, "soft_embeddings.pt"
             )
+            vctx_path = os.path.join(
+                config.save_path, f"vctx_{epoch}.pt"
+            )
 
         torch.save({"soft_embeddings": model.soft_embeddings}, soft_emb_path)
+        torch.save({"vis_context_encoder": model.vctx_encoder}, vctx_path)
 
 
 if __name__ == "__main__":

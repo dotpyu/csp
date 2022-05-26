@@ -1,4 +1,3 @@
-## Remove this later
 import argparse
 import os
 
