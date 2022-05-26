@@ -140,7 +140,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     offset = len(attributes)
 
     optimizer = torch.optim.Adam(
-        [soft_embedding, vctx_encoder.parameters()], lr=config.lr, weight_decay=config.weight_decay
+        [soft_embedding]+ list(vctx_encoder.parameters()), lr=config.lr, weight_decay=config.weight_decay
     )
 
     coop = CoCOOP(

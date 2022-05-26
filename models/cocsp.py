@@ -17,12 +17,12 @@ class VisualCtxEncoder(nn.Module):
     Visual Context Encoder
     """
     def __init__(self, vis_dim, vocab_sz):
-        super(VisualCtxEncoder, self).__init__()
         self.encoder = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
             ("relu", nn.ReLU(inplace=True)),
             ("linear2", nn.Linear(vis_dim // 16, vocab_sz))
         ]))
+        super(VisualCtxEncoder, self).__init__()
 
     def forward(self, x):
         return self.encoder(x)
@@ -95,7 +95,7 @@ def get_cocsp(train_dataset, config, device):
     vctx_encoder = VisualCtxEncoder(vis_dim, vocab_sz).to(device)
 
     optimizer = torch.optim.Adam(
-        [soft_embedding, vctx_encoder.parameters()],
+        [soft_embedding] + list(vctx_encoder.parameters()),
         lr=config.lr,
         weight_decay=config.weight_decay,
     )
