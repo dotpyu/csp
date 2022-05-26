@@ -17,12 +17,13 @@ class VisualCtxEncoder(nn.Module):
     Visual Context Encoder
     """
     def __init__(self, vis_dim, vocab_sz):
+        super(VisualCtxEncoder, self).__init__()
+
         self.encoder = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
             ("relu", nn.ReLU(inplace=True)),
             ("linear2", nn.Linear(vis_dim // 16, vocab_sz))
         ]))
-        super(VisualCtxEncoder, self).__init__()
 
     def forward(self, x):
         return self.encoder(x)
