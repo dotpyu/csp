@@ -12,6 +12,22 @@ from collections import OrderedDict
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
+class VisualCtxEncoder(nn.Module):
+    """
+    Visual Context Encoder
+    """
+    def __init__(self, vis_dim, vocab_sz):
+        super(VisualCtxEncoder, self).__init__()
+        self.encoder = nn.Sequential(OrderedDict([
+            ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
+            ("relu", nn.ReLU(inplace=True)),
+            ("linear2", nn.Linear(vis_dim // 16, vocab_sz))
+        ]))
+
+    def forward(self, x):
+        return self.encoder(x)
+
+
 class CoCSPInterface(CLIPInterface):
     def __init__(
         self,
@@ -44,7 +60,6 @@ class CoCSPInterface(CLIPInterface):
 
         vctx = self.vctx_encoder(batch_img)  # (batch, vocab_sz)
         vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_sz)
-        vctx_soft_embeddings = self.soft_embeddings + vctx  # (batch, vocab_dim, vocab_sz)
 
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
@@ -54,6 +69,7 @@ class CoCSPInterface(CLIPInterface):
 
         eos_idx = int(self.token_ids[0].argmax())
         soft_embeddings = self.attr_dropout(self.soft_embeddings)
+        vctx_soft_embeddings = soft_embeddings + vctx  # (batch, vocab_dim, vocab_sz)
         token_tensor[:, eos_idx - 2, :] = vctx_soft_embeddings[
             :, attr_idx,:
         ].type(self.clip_model.dtype)
@@ -76,11 +92,7 @@ def get_cocsp(train_dataset, config, device):
     vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = nn.Sequential(OrderedDict([
-        ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
-        ("relu", nn.ReLU(inplace=True)),
-        ("linear2", nn.Linear(vis_dim // 16, vocab_sz))
-    ]))
+    vctx_encoder = VisualCtxEncoder(vis_dim, vocab_sz).to(device)
 
     optimizer = torch.optim.Adam(
         [soft_embedding, vctx_encoder.parameters()],

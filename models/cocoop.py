@@ -7,6 +7,7 @@ import torch.nn as nn
 from clip_modules.interface import CLIPInterface
 from clip_modules.model_loader import load
 from collections import OrderedDict
+from models.cocsp import VisualCtxEncoder
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -134,11 +135,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = nn.Sequential(OrderedDict([
-        ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
-        ("relu", nn.ReLU(inplace=True)),
-        ("linear2", nn.Linear(vis_dim // 16, vocab_sz))
-    ]))
+    vctx_encoder = VisualCtxEncoder(vis_dim, vocab_sz).to(device)
 
     offset = len(attributes)
 
