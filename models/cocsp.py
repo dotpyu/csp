@@ -23,7 +23,7 @@ class VisualCtxEncoder(nn.Module):
             ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
             ("relu", nn.ReLU(inplace=True)),
             ("linear2", nn.Linear(vis_dim // 16, vocab_sz))
-        ]))
+        ])).half()
 
     def forward(self, x):
         return self.encoder(x)
@@ -57,7 +57,7 @@ class CoCSPInterface(CLIPInterface):
         self.offset = offset
         self.vctx_encoder = vctx_encoder
 
-    def construct_token_tensors(self, pair_idx):
+    def construct_token_tensors(self, batch_img, pair_idx):
 
         vctx = self.vctx_encoder(batch_img)  # (batch, vocab_sz)
         vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_sz)
@@ -79,6 +79,31 @@ class CoCSPInterface(CLIPInterface):
         ].type(self.clip_model.dtype)
 
         return token_tensor
+
+    def forward(self, batch_img, idx):
+        batch_img = batch_img.to(self.device)
+
+        token_tensors = self.construct_token_tensors(batch_img, idx)
+
+        text_features = self.text_encoder(
+            self.token_ids,
+            token_tensors,
+            enable_pos_emb=self.enable_pos_emb,
+        )
+
+        _text_features = text_features
+
+        idx_text_features = _text_features / _text_features.norm(
+            dim=-1, keepdim=True
+        )
+        normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
+        logits = (
+                self.clip_model.logit_scale.exp()
+                * normalized_img
+                @ idx_text_features.t()
+        )
+
+        return logits
 
 
 def get_cocsp(train_dataset, config, device):
