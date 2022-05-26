@@ -7,6 +7,7 @@ import torch.nn as nn
 from clip_modules.interface import CLIPInterface
 from models.csp import csp_init
 from clip_modules.model_loader import load
+from collections import OrderedDict
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
