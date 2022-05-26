@@ -83,7 +83,7 @@ def get_cocsp(train_dataset, config, device):
     ]))
 
     optimizer = torch.optim.Adam(
-        [soft_embedding, vctx_encoder],
+        [soft_embedding, vctx_encoder.parameters()],
         lr=config.lr,
         weight_decay=config.weight_decay,
     )
