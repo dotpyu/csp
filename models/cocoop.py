@@ -47,19 +47,20 @@ class CoCOOP(CLIPInterface):
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype)
+        ).type(self.clip_model.dtype).unsqueeze(0).expand(len(batch_img),-1,-1,-1)
+
 
         eos_idx = int(self.token_ids[0].argmax())
-        token_tensor[:, eos_idx - 2, :] = self.frozen_embeddings[
+        token_tensor[:,:, eos_idx - 2, :] = self.frozen_embeddings[
             attr_idx
-        ].type(self.clip_model.dtype)
-        token_tensor[:, eos_idx - 1, :] = self.frozen_embeddings[
+        ].type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img), 1, 1)
+        token_tensor[:,:, eos_idx - 1, :] = self.frozen_embeddings[
             obj_idx + self.offset
-            ].type(self.clip_model.dtype)
+            ].type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img), 1, 1)
 
         # adding the correct learnable context
         token_tensor[
-        :, 1: len(self.soft_embeddings) + 1, :
+        :,:, 1: len(self.soft_embeddings) + 1, :
         ] = vctx_soft_embeddings.type(self.clip_model.dtype)
 
         return token_tensor
@@ -69,25 +70,49 @@ class CoCOOP(CLIPInterface):
 
         token_tensors = self.construct_token_tensors(batch_img, idx)
 
-        text_features = self.text_encoder(
-            self.token_ids,
-            token_tensors,
-            enable_pos_emb=self.enable_pos_emb,
-        )
+        cand_sz = token_tensors.shape[1]
+        logits = torch.empty([len(batch_img), cand_sz], device=self.device, dtype=self.clip_model.dtype)
+        # token_tensors => (batch_sz, prompt_len, vocab_dim)
+        batch_img /= batch_img.norm(dim=-1, keepdim=True)
 
-        _text_features = text_features
+        # TODO: Parallelize without loop
+        for img_id, img_feat in enumerate(batch_img):
+            text_features = self.text_encoder(
+                self.token_ids,
+                token_tensors[img_id],
+                enable_pos_emb=self.enable_pos_emb,
+            )
+            text_features /= text_features.norm(dim=-1, keepdim=True)
+            logits[img_id] = img_feat @ text_features.t()
 
-        idx_text_features = _text_features / _text_features.norm(
-            dim=-1, keepdim=True
-        )
-        normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
-        logits = (
-            self.clip_model.logit_scale.exp()
-            * normalized_img
-            @ idx_text_features.t()
-        )
+        logits *= self.clip_model.logit_scale.exp()
 
         return logits
+
+    # def forward(self, batch_img, idx):
+    #     batch_img = batch_img.to(self.device)
+    #
+    #     token_tensors = self.construct_token_tensors(batch_img, idx)
+    #
+    #     text_features = self.text_encoder(
+    #         self.token_ids,
+    #         token_tensors,
+    #         enable_pos_emb=self.enable_pos_emb,
+    #     )
+    #
+    #     _text_features = text_features
+    #
+    #     idx_text_features = _text_features / _text_features.norm(
+    #         dim=-1, keepdim=True
+    #     )
+    #     normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
+    #     logits = (
+    #         self.clip_model.logit_scale.exp()
+    #         * normalized_img
+    #         @ idx_text_features.t()
+    #     )
+    #
+    #     return logits
 
 
 def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):

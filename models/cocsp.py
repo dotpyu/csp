@@ -29,6 +29,25 @@ class VisualCtxEncoder(nn.Module):
         return self.encoder(x)
 
 
+def logits_compute(vc_text, img):
+    """
+    vc_text is a pytorch tensor of (batch_size, candidate_size, embed_dim)
+    img is a pytorch tensor of (batch_size, embed_dim)
+
+    this function computes the matrix multiplication for each batch of the vc_text of the respective image
+    """
+    batch_size = vc_text.size(0)
+    candidate_size = vc_text.size(1)
+    embed_dim = vc_text.size(2)
+    img = img.unsqueeze(1).repeat(1, candidate_size, 1)
+    img = img.view(batch_size * candidate_size, embed_dim)
+    vc_text = vc_text.view(batch_size * candidate_size, embed_dim)
+    logits = torch.bmm(img, vc_text.transpose(1, 2))
+    logits = logits.view(batch_size, candidate_size, -1)
+    return logits
+
+
+
 class CoCSPInterface(CLIPInterface):
     def __init__(
         self,
@@ -59,22 +78,25 @@ class CoCSPInterface(CLIPInterface):
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
-        vctx = self.vctx_encoder(batch_img)  # (batch, vocab_sz)
-        vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_sz)
+        vctx = self.vctx_encoder(batch_img)  # (batch, vocab_dim)
+        vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_dim)
 
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype)
+        ).type(self.clip_model.dtype).unsqueeze(0).expand(len(batch_img),-1,-1,-1)
 
         eos_idx = int(self.token_ids[0].argmax())
         soft_embeddings = self.attr_dropout(self.soft_embeddings)
-        vctx_soft_embeddings = soft_embeddings + vctx  # (batch, vocab_dim, vocab_sz)
-        token_tensor[:, eos_idx - 2, :] = vctx_soft_embeddings[
+        vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
+
+        # Token Tensors old: (label_sz, vocab_sz, vocab_dim) -> (batch, label_sz, vocab_sz, vocab_dim)
+        token_tensor = token_tensor.unsqueeze(0).expand(len(batch_img), 1, 1, 1)
+        token_tensor[:, :, eos_idx - 2, :] = vctx_soft_embeddings[
             :, attr_idx,:
         ].type(self.clip_model.dtype)
-        token_tensor[:, eos_idx - 1, :] = vctx_soft_embeddings[
+        token_tensor[:, :, eos_idx - 1, :] = vctx_soft_embeddings[
             :, obj_idx + self.offset, :
         ].type(self.clip_model.dtype)
 
@@ -85,23 +107,22 @@ class CoCSPInterface(CLIPInterface):
 
         token_tensors = self.construct_token_tensors(batch_img, idx)
 
-        text_features = self.text_encoder(
-            self.token_ids,
-            token_tensors,
-            enable_pos_emb=self.enable_pos_emb,
-        )
+        cand_sz = token_tensors.shape[1]
+        logits = torch.empty([len(batch_img), cand_sz], device=self.device, dtype=self.clip_model.dtype)
+        # token_tensors => (batch_sz, prompt_len, vocab_dim)
+        batch_img /= batch_img.norm(dim=-1, keepdim=True)
 
-        _text_features = text_features
+        # TODO: Parallelize without loop
+        for img_id, img_feat in enumerate(batch_img):
+            text_features = self.text_encoder(
+                self.token_ids,
+                token_tensors[img_id],
+                enable_pos_emb=self.enable_pos_emb,
+            )
+            text_features /= text_features.norm(dim=-1, keepdim=True)
+            logits[img_id] = img_feat @ text_features.t()
 
-        idx_text_features = _text_features / _text_features.norm(
-            dim=-1, keepdim=True
-        )
-        normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
-        logits = (
-                self.clip_model.logit_scale.exp()
-                * normalized_img
-                @ idx_text_features.t()
-        )
+        logits *= self.clip_model.logit_scale.exp()
 
         return logits
 
