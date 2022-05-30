@@ -89,6 +89,15 @@ class CoCSPInterface(CLIPInterface):
 
         eos_idx = int(self.token_ids[0].argmax())
         soft_embeddings = self.attr_dropout(self.soft_embeddings)
+        print(soft_embeddings.shape)
+        print(token_tensor.shape)
+        '''
+
+         vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
+        RuntimeError: The size of tensor a (768) must match the size of tensor b (360) at non-singleton dimension 2
+
+
+        '''
         vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
 
         # Token Tensors old: (label_sz, vocab_sz, vocab_dim) -> (batch, label_sz, vocab_sz, vocab_dim)
