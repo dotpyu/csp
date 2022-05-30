@@ -91,6 +91,9 @@ class CoCSPInterface(CLIPInterface):
         soft_embeddings = self.attr_dropout(self.soft_embeddings)
         print(soft_embeddings.shape)
         print(token_tensor.shape)
+        print(vctx.shape)
+        # torch.Size([360, 768])
+        # torch.Size([64, 1262, 8, 768])
         '''
 
          vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
