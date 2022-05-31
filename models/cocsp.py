@@ -61,6 +61,7 @@ class CoCSPInterface(CLIPInterface):
         enable_pos_emb=True,
         attr_dropout=0.0,
     ):
+        soft_embeddings = soft_embeddings.unsqueeze(0).repeat(len(config.train_batch_size), 1, 1)
         super().__init__(
             clip_model,
             config,
@@ -86,7 +87,7 @@ class CoCSPInterface(CLIPInterface):
 
         eos_idx = int(self.token_ids[0].argmax())
 
-        soft_embeddings = self.attr_dropout(self.soft_embeddings)
+        # soft_embeddings = self.attr_dropout(self.soft_embeddings)
         # print(soft_embeddings.shape)
         # print(token_tensor.shape)
         # print(vctx.shape)
@@ -103,8 +104,7 @@ class CoCSPInterface(CLIPInterface):
 
         '''
         # reshape vctx to be the same shape of soft_embeddings
-        soft_embeddings = soft_embeddings.unsqueeze(0).repeat(len(batch_img), 1, 1)
-        soft_embeddings = soft_embeddings.to(self.device)
+        soft_embeddings = self.soft_embeddings.to(self.device)
         soft_embeddings[:, :self.offset, :] += vctx[:, 0].unsqueeze(-1).unsqueeze(-1).repeat(1, self.offset, 1)
         soft_embeddings[:, self.offset:, :] += vctx[:, 1].unsqueeze(-1).unsqueeze(-1).repeat(1, soft_embeddings.shape[1] - self.offset, 1)
 
