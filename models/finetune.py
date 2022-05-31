@@ -1,6 +1,6 @@
 import argparse
 import os
-
+from copy import deepcopy as dc
 import clip
 import torch
 import torch.nn as nn
@@ -10,7 +10,7 @@ from clip_modules.model_loader import load
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-def get_ft(train_dataset, config, device, prompt_template="a photo of x x"):
+def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [obj]"):
 
     clip_model, preprocess = load(
         config.clip_model, device=device, context_length=config.context_length
@@ -23,44 +23,16 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of x x"):
     classes = [cla.replace(".", " ").lower() for cla in allobj]
     attributes = [attr.replace(".", " ").lower() for attr in allattrs]
 
-    tokenized = torch.cat(
-        [
-            clip.tokenize(tok, context_length=config.context_length)
-            for tok in attributes + classes
-        ]
-    )
-    orig_token_embedding = clip_model.token_embedding(tokenized.to(device))
-
-    with torch.no_grad():
-        frozen_embedding = torch.zeros(
-            (len(attributes) + len(classes), clip_model.token_embedding.weight.size(-1)),
-        )
-        for idx, rep in enumerate(orig_token_embedding):
-            eos_idx = tokenized[idx].argmax()
-            frozen_embedding[idx, :] = torch.mean(rep[1:eos_idx, :], axis=0)
-
-    ctx_init = "a photo of "
-    n_ctx = len(ctx_init.split())
-    prompt = clip.tokenize(ctx_init,
-                           context_length=config.context_length).to(device)
-    with torch.no_grad():
-        embedding = clip_model.token_embedding(prompt)
-
-    ctx_vectors = embedding[0, 1 : 1 + n_ctx, :]
-
-    token_ids = clip.tokenize(prompt_template,
-                              context_length=config.context_length).to(device)
-
-    soft_embedding = nn.Parameter(ctx_vectors).to(device)
     offset = len(attributes)
 
     ft = Finetune(
         clip_model,
         config,
         offset,
-        soft_embedding,
-        frozen_embedding,
+        attributes,
+        classes,
         token_ids,
+        prompt_template=prompt_template,
         device=device,
         enable_pos_emb=True,
     )
@@ -77,9 +49,10 @@ class Finetune(CLIPInterface):
         clip_model,
         config: argparse.ArgumentParser,
         offset,
-        soft_embeddings: torch.nn.Parameter,
-        frozen_embeddings: torch.nn.Parameter,
+        attributes,
+        objects,
         token_ids: torch.tensor,
+        prompt_template="a photo of [attr] [obj]",
         device: torch.device = "cuda:0",
         enable_pos_emb: bool = False,
     ):
@@ -87,7 +60,7 @@ class Finetune(CLIPInterface):
             clip_model,
             config,
             token_ids,
-            soft_embeddings=soft_embeddings,
+            soft_embeddings=None,
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
@@ -96,25 +69,18 @@ class Finetune(CLIPInterface):
         for params in self.text_encoder.parameters():
             params.requires_grad = True
         self.clip_model.text_projection.requires_grad = True
-        self.soft_embeddings.requires_grad = False
-
+        self.attributes = attributes
+        self.objects = objects
+        self.prompt_template = prompt_template
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
-        class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
-        token_tensor = self.clip_model.token_embedding(
-            class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype)
-
-        eos_idx = int(self.token_ids[0].argmax())
-        token_tensor[:, eos_idx - 2, :] = self.frozen_embeddings[
-            attr_idx
-        ].type(self.clip_model.dtype)
-        token_tensor[:, eos_idx - 1, :] = self.frozen_embeddings[
-            obj_idx + self.offset
-        ].type(self.clip_model.dtype)
-        token_tensor[
-            :, 1 : len(self.soft_embeddings) + 1, :
-        ] = self.soft_embeddings.type(self.clip_model.dtype)
+        # class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
+        # token_tensor = self.clip_model.token_embedding(
+        #     class_token_ids.to(self.device)
+        # ).type(self.clip_model.dtype)
+        prompts = [dc(self.prompt_template).replace('[attr]', self.attributes[attr_idx]).replace('[obj]', self.objects[obj_idx]) for attr_idx, obj_idx in zip(attr_idx, obj_idx)]
+        tokenized = torch.cat(clip.tokenize(prompts, context_length=config.context_length))
+        token_tensor = self.clip_model.token_embedding(tokenized.to(self.device))
 
         return token_tensor
