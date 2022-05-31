@@ -64,7 +64,6 @@ class Finetune(CLIPInterface):
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
-        self.frozen_embeddings = frozen_embeddings
         self.offset = offset
         for params in self.text_encoder.parameters():
             params.requires_grad = True
