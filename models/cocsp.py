@@ -124,10 +124,10 @@ class CoCSPInterface(CLIPInterface):
         cand_sz = token_tensors.shape[1]
         logits = torch.empty([len(batch_img), cand_sz], device=self.device, dtype=self.clip_model.dtype)
         # token_tensors => (batch_sz, prompt_len, vocab_dim)
-        batch_img /= batch_img.norm(dim=-1, keepdim=True)
+        _batch_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
 
         # TODO: Parallelize without loop
-        for img_id, img_feat in enumerate(batch_img):
+        for img_id, img_feat in enumerate(_batch_img):
             text_features = self.text_encoder(
                 self.token_ids,
                 token_tensors[img_id],
