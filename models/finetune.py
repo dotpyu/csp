@@ -57,7 +57,7 @@ class Finetune(CLIPInterface):
         enable_pos_emb: bool = False,
     ):
         super().__init__(
-            clip_model.to(self.dtype),
+            clip_model.float(),
             config,
             token_ids,
             soft_embeddings=torch.zeros([len(attributes)]),
