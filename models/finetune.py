@@ -85,12 +85,13 @@ class Finetune(CLIPInterface):
         batch_img = batch_img.to(self.device)
 
         tokenized = self.construct_token_tensors(idx).to(self.device)
-
+        print(tokenized)
         text_features = self.text_encoder(
             tokenized,
             None,
             enable_pos_emb=True,
         )
+        print(text_features)
         _text_features = text_features
 
         idx_text_features = _text_features / _text_features.norm(
