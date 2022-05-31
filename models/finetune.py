@@ -79,7 +79,7 @@ class Finetune(CLIPInterface):
         #     class_token_ids.to(self.device)
         # ).type(self.clip_model.dtype)
         prompts = [dc(self.prompt_template).replace('[attr]', self.attributes[attr_idx]).replace('[obj]', self.objects[obj_idx]) for attr_idx, obj_idx in zip(attr_idx, obj_idx)]
-        tokenized = torch.cat(clip.tokenize(prompts, context_length=config.context_length))
+        tokenized = torch.cat(clip.tokenize(prompts, context_length=self.config.context_length))
         token_tensor = self.clip_model.token_embedding(tokenized.to(self.device))
 
         return token_tensor
