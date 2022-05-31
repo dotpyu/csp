@@ -102,9 +102,10 @@ class CoCSPInterface(CLIPInterface):
         RuntimeError: The size of tensor a (768) must match the size of tensor b (64) at non-singleton dimension 2
 
         '''
+        # reshape vctx to be the same shape of soft_embeddings
         soft_embeddings = soft_embeddings.unsqueeze(0).repeat(len(batch_img), 1, 1)
-        soft_embeddings[:, :self.offset, :] += vctx[:, 0]
-        soft_embeddings[:, self.offset:, :] += vctx[:, 1]
+        soft_embeddings[:, :self.offset, :] += vctx[:, 0].unsqueeze(1).repeat(1, self.offset, 1)
+        soft_embeddings[:, self.offset:, :] += vctx[:, 1].unsqueeze(1).repeat(1, soft_embeddings.shape[1] - self.offset, 1)
 
         attr_emb = soft_embeddings[:, attr_idx, :].type(self.clip_model.dtype)
         obj_emb = soft_embeddings[:, obj_idx + self.offset, :].type(self.clip_model.dtype)
