@@ -39,15 +39,15 @@ class CoCOOP(CLIPInterface):
 
     def construct_token_tensors(self, batch_img, pair_idx):
         vctx = self.vctx_encoder(batch_img)  # (batch, vocab_sz)
-        vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_sz)
-        vctx_soft_embeddings = self.soft_embeddings + vctx  # (batch, vocab_dim, vocab_sz)
+        vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_dim)
+        vctx_soft_embeddings = self.soft_embeddings + vctx  # (batch, vocab_sz, vocab_dim)
 
 
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype).unsqueeze(0).expand(len(batch_img),-1,-1,-1)
+        ).type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img),1,1,1)
 
 
         eos_idx = int(self.token_ids[0].argmax())
@@ -160,7 +160,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim, n_ctx).to(device)
+    vctx_encoder = VisualCtxEncoder(vis_dim, ctx_vectors.shape[-1]).to(device)
 
     offset = len(attributes)
 
