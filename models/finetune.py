@@ -91,13 +91,13 @@ class Finetune(CLIPInterface):
             enable_pos_emb=True,
         ).half()
 
-        text_features /= text_features.norm(
+        _text_features = text_features / text_features.norm(
             dim=-1, keepdim=True
         )
         normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
         logits = (
             self.clip_model.logit_scale.exp()
             * normalized_img
-            @ text_features.t()
+            @ _text_features.t()
         )
         return logits

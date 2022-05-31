@@ -45,21 +45,21 @@ class CoCOOP(CLIPInterface):
         vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_dim)
         soft_embeddings = self.soft_embeddings.unsqueeze(0)  # (1, n_ctx, vocab_dim)
         vctx_soft_embeddings = soft_embeddings + vctx  # (batch, vocab_sz, vocab_dim)
-        vctx_soft_embeddings = vctx_soft_embeddings.type(self.clip_model.dtype).unsqueeze(1)
+        vctx_soft_embeddings = vctx_soft_embeddings.type(self.clip_model.dtype).unsqueeze(1).expand(-1, len(attr_idx), -1, -1)  # (batch, n_ctx, vocab_dim)
 
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype).unsqueeze(0)
+        ).type(self.clip_model.dtype).unsqueeze(0).repeat(len(pair_idx), 1, 1)  # (batch, prompt_len, vocab_dim)
 
 
         eos_idx = int(self.token_ids[0].argmax())
         token_tensor[:,:, eos_idx - 2, :] = self.frozen_embeddings[
             attr_idx
-        ].type(self.clip_model.dtype)
+        ].type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img), 1)  # (batch, prompt_len, vocab_dim)
         token_tensor[:,:, eos_idx - 1, :] = self.frozen_embeddings[
             obj_idx + self.offset
-            ].type(self.clip_model.dtype)
+            ].type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img), 1)  # (batch, prompt_len, vocab_dim)
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
@@ -76,7 +76,7 @@ class CoCOOP(CLIPInterface):
         logits = torch.empty([len(batch_img), cand_sz], device=self.device, dtype=self.clip_model.dtype)
         # token_tensors => (batch_sz, prompt_len, vocab_dim)
         batch_img /= batch_img.norm(dim=-1, keepdim=True)
-
+1
         # TODO: Parallelize without loops
         for img_id, img_feat in enumerate(batch_img):
             text_features = self.text_encoder(
@@ -84,8 +84,8 @@ class CoCOOP(CLIPInterface):
                 token_tensors[img_id],
                 enable_pos_emb=self.enable_pos_emb,
             )
-            text_features /= text_features.norm(dim=-1, keepdim=True)
-            logits[img_id] = img_feat @ text_features.t()
+            _text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+            logits[img_id] = img_feat @ _text_features.t()
 
         logits *= self.clip_model.logit_scale.exp()
 

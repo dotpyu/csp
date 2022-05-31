@@ -133,8 +133,8 @@ class CoCSPInterface(CLIPInterface):
                 token_tensors[img_id],
                 enable_pos_emb=self.enable_pos_emb,
             )
-            text_features /= text_features.norm(dim=-1, keepdim=True)
-            logits[img_id] = img_feat @ text_features.t()
+            _text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+            logits[img_id] = img_feat @ _text_features.t()
 
         logits *= self.clip_model.logit_scale.exp()
 
