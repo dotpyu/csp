@@ -105,8 +105,8 @@ class CoCSPInterface(CLIPInterface):
         obj_emb = soft_embeddings[obj_idx + self.offset, :].type(self.clip_model.dtype).to(self.device)
         # print(attr_emb.expand(len(batch_img),-1).shape)
 
-        token_tensor[:, :, eos_idx - 2, :] = attr_emb.unsqueeze(0).repeat(len(batch_img),-1,-1) + vctx[:,0].unsqueeze(-1).unsqueeze(-1).repeat(-1,attr_emb.shape[0],attr_emb.shape[1])
-        token_tensor[:, :, eos_idx - 1, :] = obj_emb.unsqueeze(0).repeat(len(batch_img),-1,-1) + vctx[:,1].unsqueeze(-1).unsqueeze(-1).repeat(-1,attr_emb.shape[0],attr_emb.shape[1])
+        token_tensor[:, :, eos_idx - 2, :] = attr_emb.unsqueeze(0).repeat(len(batch_img),1,1) + vctx[:,0].unsqueeze(-1).unsqueeze(-1).repeat(1,attr_emb.shape[0],attr_emb.shape[1])
+        token_tensor[:, :, eos_idx - 1, :] = obj_emb.unsqueeze(0).repeat(len(batch_img),1,1) + vctx[:,1].unsqueeze(-1).unsqueeze(-1).repeat(1,attr_emb.shape[0],attr_emb.shape[1])
         return token_tensor
 
     def forward(self, batch_img, idx):
