@@ -68,7 +68,6 @@ class Finetune(CLIPInterface):
         for params in self.text_encoder.parameters():
             params.requires_grad = True
         self.attributes = attributes
-        self.
         self.objects = objects
         self.prompt_template = prompt_template
 
