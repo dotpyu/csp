@@ -85,6 +85,7 @@ class CoCSPInterface(CLIPInterface):
         ).type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img),1,1,1)
 
         eos_idx = int(self.token_ids[0].argmax())
+
         soft_embeddings = self.attr_dropout(self.soft_embeddings)
         # print(soft_embeddings.shape)
         # print(token_tensor.shape)
@@ -101,12 +102,16 @@ class CoCSPInterface(CLIPInterface):
         RuntimeError: The size of tensor a (768) must match the size of tensor b (64) at non-singleton dimension 2
 
         '''
-        attr_emb = soft_embeddings[attr_idx, :].type(self.clip_model.dtype).to(self.device)
-        obj_emb = soft_embeddings[obj_idx + self.offset, :].type(self.clip_model.dtype).to(self.device)
+        soft_embeddings = soft_embeddings.unsqueeze(0).expand(len(batch_img), -1, -1)
+        soft_embeddings[:, :self.offset, :] += vctx[:, 0]
+        soft_embeddings[:, self.offset:, :] += vctx[:, 1]
+
+        attr_emb = soft_embeddings[:, attr_idx, :].type(self.clip_model.dtype)
+        obj_emb = soft_embeddings[:, obj_idx + self.offset, :].type(self.clip_model.dtype)
         # print(attr_emb.expand(len(batch_img),-1).shape)
 
-        token_tensor[:, :, eos_idx - 2, :] = attr_emb.unsqueeze(0).expand(len(batch_img),-1,-1) + vctx[:,0].unsqueeze(-1).unsqueeze(-1).repeat(1,attr_emb.shape[0],attr_emb.shape[1])
-        token_tensor[:, :, eos_idx - 1, :] = obj_emb.unsqueeze(0).expand(len(batch_img),-1,-1) + vctx[:,1].unsqueeze(-1).unsqueeze(-1).repeat(1,attr_emb.shape[0],attr_emb.shape[1])
+        token_tensor[:, :, eos_idx - 2, :] = attr_emb
+        token_tensor[:, :, eos_idx - 1, :] = obj_emb
         return token_tensor
 
     def forward(self, batch_img, idx):
