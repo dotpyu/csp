@@ -43,8 +43,9 @@ class CoCOOP(CLIPInterface):
 
         vctx = self.vctx_encoder(batch_img)  # (batch, vocab_sz)
         vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_dim)
-        vctx_soft_embeddings = self.soft_embeddings + vctx  # (batch, vocab_sz, vocab_dim)
-        vctx_soft_embeddings =vctx_soft_embeddings.type(self.clip_model.dtype).unsqueeze(1).repeat(1, len(attr_idx), 1, 1)
+        soft_embeddings = self.soft_embeddings.unsqueeze(0)  # (1, n_ctx, vocab_dim)
+        vctx_soft_embeddings = soft_embeddings + vctx  # (batch, vocab_sz, vocab_dim)
+        vctx_soft_embeddings =vctx_soft_embeddings.type(self.clip_model.dtype).unsqueeze(1).expand(-1, len(attr_idx), -1, -1)
 
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
         token_tensor = self.clip_model.token_embedding(
