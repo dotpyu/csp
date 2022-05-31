@@ -67,7 +67,6 @@ class Finetune(CLIPInterface):
         self.offset = offset
         for params in self.text_encoder.parameters():
             params.requires_grad = True
-        self.clip_model.text_projection.requires_grad = True
         self.attributes = attributes
         self.objects = objects
         self.prompt_template = prompt_template
@@ -103,5 +102,4 @@ class Finetune(CLIPInterface):
             * normalized_img
             @ idx_text_features.t()
         )
-        print(logits)
         return logits
