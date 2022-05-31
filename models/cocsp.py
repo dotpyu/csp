@@ -82,7 +82,7 @@ class CoCSPInterface(CLIPInterface):
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype).unsqueeze(0).expand(len(batch_img),-1,-1,-1)
+        ).type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img),1,1,1)
 
         eos_idx = int(self.token_ids[0].argmax())
         soft_embeddings = self.attr_dropout(self.soft_embeddings)
