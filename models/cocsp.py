@@ -105,8 +105,6 @@ class CoCSPInterface(CLIPInterface):
         # vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
 
         # Token Tensors old: (label_sz, vocab_sz, vocab_dim) -> (batch, label_sz, vocab_sz, vocab_dim)
-        token_tensor = token_tensor.unsqueeze(0).expand(len(batch_img), 1, 1, 1)
-
         token_tensor[:, :, eos_idx - 2, :] = soft_embeddings[
             attr_idx, :
         ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,0]
