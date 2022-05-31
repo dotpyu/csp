@@ -54,7 +54,7 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of x x"):
     soft_embedding = nn.Parameter(ctx_vectors).to(device)
 
     optimizer = torch.optim.Adam(
-        [clip_model], lr=config.lr, weight_decay=config.weight_decay
+        [clip_model.parameters()], lr=config.lr, weight_decay=config.weight_decay
     )
     offset = len(attributes)
 
