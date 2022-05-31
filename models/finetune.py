@@ -82,26 +82,22 @@ class Finetune(CLIPInterface):
         return tokenized
 
     def forward(self, batch_img, idx):
-        batch_img = batch_img.to(self.device)
+        batch_img = batch_img.to(self.device).half()
 
         tokenized = self.construct_token_tensors(idx).to(self.device)
-        print(tokenized)
         text_features = self.text_encoder(
             tokenized,
             None,
             enable_pos_emb=True,
-        )
-        print(text_features)
-        _text_features = text_features
+        ).half()
 
-        idx_text_features = _text_features / _text_features.norm(
+        text_features /= text_features.norm(
             dim=-1, keepdim=True
         )
         normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
         logits = (
             self.clip_model.logit_scale.exp()
             * normalized_img
-            @ idx_text_features.t()
+            @ text_features.t()
         )
-        print(idx_text_features)
         return logits
