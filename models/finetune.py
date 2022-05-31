@@ -52,10 +52,6 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of x x"):
                               context_length=config.context_length).to(device)
 
     soft_embedding = nn.Parameter(ctx_vectors).to(device)
-
-    optimizer = torch.optim.Adam(
-        clip_model.parameters(), lr=config.lr, weight_decay=config.weight_decay
-    )
     offset = len(attributes)
 
     ft = Finetune(
@@ -67,6 +63,9 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of x x"):
         token_ids,
         device=device,
         enable_pos_emb=True,
+    )
+    optimizer = torch.optim.Adam(
+        ft.parameters(), lr=config.lr, weight_decay=config.weight_decay
     )
 
     return ft, optimizer
@@ -114,8 +113,6 @@ class Finetune(CLIPInterface):
         token_tensor[:, eos_idx - 1, :] = self.frozen_embeddings[
             obj_idx + self.offset
         ].type(self.clip_model.dtype)
-
-        # adding the correct learnable context
         token_tensor[
             :, 1 : len(self.soft_embeddings) + 1, :
         ] = self.soft_embeddings.type(self.clip_model.dtype)
