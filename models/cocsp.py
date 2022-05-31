@@ -103,9 +103,9 @@ class CoCSPInterface(CLIPInterface):
         '''
         attr_emb = soft_embeddings[attr_idx, :].type(self.clip_model.dtype)
         obj_emb = soft_embeddings[obj_idx + self.offset, :].type(self.clip_model.dtype)
-        print(attr_emb.expand(len(batch_img),-1).shape)
+        # print(attr_emb.expand(len(batch_img),-1).shape)
         print(obj_emb.unsqueeze(0).expand(len(batch_img),-1).shape)
-        print(vctx[:,0].shape)
+        print(vctx[:,0].unsqueeze(0).expand(-1,soft_embeddings.shape[1]).shape)
         exit()
         # token_tensor[:, :, eos_idx - 2, :] = .expand(len(batch_img),-1) + vctx[:,0].expand(-1,soft_embeddings.shape[1])
         # token_tensor[:, :, eos_idx - 1, :] = soft_embeddings[
