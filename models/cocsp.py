@@ -95,22 +95,20 @@ class CoCSPInterface(CLIPInterface):
         # torch.Size([360, 768])
         # torch.Size([64, 1262, 8, 768])
         # torch.Size([64, 2]) # scalar bias
-        '''
-
-         vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
-        RuntimeError: The size of tensor a (768) must match the size of tensor b (360) at non-singleton dimension 2
-
-
-        '''
         # vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
 
         # Token Tensors old: (label_sz, vocab_sz, vocab_dim) -> (batch, label_sz, vocab_sz, vocab_dim)
+
+        '''
+        RuntimeError: The size of tensor a (768) must match the size of tensor b (64) at non-singleton dimension 2
+
+        '''
         token_tensor[:, :, eos_idx - 2, :] = soft_embeddings[
             attr_idx, :
-        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,0]
+        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,0].repeat(1,soft_embeddings.shape[-1])
         token_tensor[:, :, eos_idx - 1, :] = soft_embeddings[
              obj_idx + self.offset, :
-        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,1]
+        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,1].repeat(1,soft_embeddings.shape[-1])
 
         return token_tensor
 
