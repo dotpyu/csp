@@ -80,6 +80,28 @@ class Finetune(CLIPInterface):
         # ).type(self.clip_model.dtype)
         prompts = [dc(self.prompt_template).replace('[attr]', self.attributes[attr_idx]).replace('[obj]', self.objects[obj_idx]) for attr_idx, obj_idx in zip(attr_idx, obj_idx)]
         tokenized = clip.tokenize(prompts, context_length=self.config.context_length)
-        token_tensor = self.text_encoder(tokenized.to(self.device))
+        return tokenized
 
-        return token_tensor
+    def forward(self, batch_img, idx):
+        batch_img = batch_img.to(self.device)
+
+        tokenized = self.construct_token_tensors(idx)
+
+        text_features = self.text_encoder(
+            tokenized,
+            None,
+            enable_pos_emb=True,
+        )
+        _text_features = text_features
+
+        idx_text_features = _text_features / _text_features.norm(
+            dim=-1, keepdim=True
+        )
+        normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
+        logits = (
+            self.clip_model.logit_scale.exp()
+            * normalized_img
+            @ idx_text_features.t()
+        )
+
+        return logits
