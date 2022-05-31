@@ -61,7 +61,7 @@ class CoCOOP(CLIPInterface):
         # adding the correct learnable context
         token_tensor[
         :,:, 1: len(self.soft_embeddings) + 1, :
-        ] = vctx_soft_embeddings.type(self.clip_model.dtype)
+        ] = vctx_soft_embeddings.type(self.clip_model.dtype).unsqueeze(1).expand(-1, len(attr_idx), -1, -1)
 
         return token_tensor
 
