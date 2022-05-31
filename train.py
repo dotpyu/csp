@@ -110,6 +110,18 @@ def save_soft_embeddings(model, config, epoch=None):
     if not os.path.exists(config.save_path):
         os.makedirs(config.save_path)
 
+    if config.finetune:
+        if epoch:
+            model_save_path = os.path.join(
+                config.save_path, f"finetune_model_{epoch}.pth"
+            )
+        else:
+            model_save_path = os.path.join(
+                config.save_path, f"finetune_model.pth"
+            )
+        torch.save(model.state_dict(), model_save_path)
+        return
+
     # save the soft embedding
     with torch.no_grad():
         if epoch:
@@ -187,6 +199,8 @@ if __name__ == "__main__":
         help="indicate if you want to save the model state dict()",
         action="store_true",
     )
+
+    parser.add_argument("--finetune", help="finetune the model", action="store_true")
     parser.add_argument("--seed", help="seed value", default=0, type=int)
 
     parser.add_argument(

@@ -63,7 +63,7 @@ class CoCOOP(CLIPInterface):
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
-        token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] = token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :]  + vctx_soft_embeddings
+        token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] = token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :]  + vctx_soft_embeddings # [BS, CAND_SZ, vocab_sz, vocab_dim]
 
         return token_tensor
 
