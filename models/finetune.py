@@ -31,7 +31,7 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
         offset,
         attributes,
         classes,
-        token_ids,
+        None,
         prompt_template=prompt_template,
         device=device,
         enable_pos_emb=True,
