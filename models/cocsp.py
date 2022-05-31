@@ -72,8 +72,6 @@ class CoCSPInterface(CLIPInterface):
 
         self.offset = offset
         self.attr_dropout = nn.Dropout(attr_dropout)
-
-        self.offset = offset
         self.vctx_encoder = vctx_encoder
 
     def construct_token_tensors(self, batch_img, pair_idx):
@@ -105,10 +103,10 @@ class CoCSPInterface(CLIPInterface):
         '''
         token_tensor[:, :, eos_idx - 2, :] = soft_embeddings[
             attr_idx, :
-        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,0].repeat(1,token_tensor.shape[-1])
+        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,0].repeat(1,soft_embeddings.shape[1])
         token_tensor[:, :, eos_idx - 1, :] = soft_embeddings[
              obj_idx + self.offset, :
-        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,1].repeat(1,token_tensor.shape[-1])
+        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,1].repeat(1,soft_embeddings.shape[1])
 
         return token_tensor
 
