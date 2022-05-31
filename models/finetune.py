@@ -94,7 +94,7 @@ class Finetune(CLIPInterface):
         )
         self.frozen_embeddings = frozen_embeddings
         self.offset = offset
-        for params in self.clip_model.text_encoder.parameters():
+        for params in self.text_encoder.parameters():
             params.requires_grad = True
         self.clip_model.text_projection.requires_grad = True
         self.soft_embeddings.requires_grad = False
