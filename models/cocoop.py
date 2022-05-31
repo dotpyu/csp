@@ -48,21 +48,24 @@ class CoCOOP(CLIPInterface):
         vctx_soft_embeddings = vctx_soft_embeddings.type(self.clip_model.dtype) # (batch, n_ctx, vocab_dim)
 
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
+
+        # Problem here
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype).unsqueeze(0).repeat(len(pair_idx), 1, 1)  # (batch, prompt_len, vocab_dim)
+        ).type(self.clip_model.dtype).unsqueeze(0)  # (batch, prompt_len, vocab_dim)
 
 
         eos_idx = int(self.token_ids[0].argmax())
         token_tensor[:,:, eos_idx - 2, :] = self.frozen_embeddings[
             attr_idx
-        ].type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img), 1)  # (batch, prompt_len, vocab_dim)
+        ].type(self.clip_model.dtype) # (batch, prompt_len, vocab_dim)
         token_tensor[:,:, eos_idx - 1, :] = self.frozen_embeddings[
             obj_idx + self.offset
-            ].type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img), 1)  # (batch, prompt_len, vocab_dim)
+            ].type(self.clip_model.dtype) # (batch, prompt_len, vocab_dim)
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
+        token_tensor = token_tensor.repeat(len(batch_img), 1, 1, 1)
         token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] += vctx_soft_embeddings.unsqueeze(1).expand(-1, len(attr_idx), -1, -1)  # [BS, CAND_SZ, vocab_sz, vocab_dim]
 
         return token_tensor
