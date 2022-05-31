@@ -16,7 +16,7 @@ class VisualCtxEncoder(nn.Module):
     """
     Visual Context Encoder
     """
-    def __init__(self, vis_dim, vocab_sz):
+    def __init__(self, vis_dim, prompt_vocab_sz=2):
         super(VisualCtxEncoder, self).__init__()
 
         self.encoder = nn.Sequential(OrderedDict([
@@ -79,7 +79,6 @@ class CoCSPInterface(CLIPInterface):
     def construct_token_tensors(self, batch_img, pair_idx):
 
         vctx = self.vctx_encoder(batch_img)  # (batch, vocab_dim)
-        vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_dim)
 
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
@@ -89,11 +88,13 @@ class CoCSPInterface(CLIPInterface):
 
         eos_idx = int(self.token_ids[0].argmax())
         soft_embeddings = self.attr_dropout(self.soft_embeddings)
-        print(soft_embeddings.shape)
-        print(token_tensor.shape)
-        print(vctx.shape)
+        # print(soft_embeddings.shape)
+        # print(token_tensor.shape)
+        # print(vctx.shape)
+
         # torch.Size([360, 768])
         # torch.Size([64, 1262, 8, 768])
+        # torch.Size([64, 2]) # scalar bias
         '''
 
          vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
@@ -101,16 +102,17 @@ class CoCSPInterface(CLIPInterface):
 
 
         '''
-        vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
+        # vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
 
         # Token Tensors old: (label_sz, vocab_sz, vocab_dim) -> (batch, label_sz, vocab_sz, vocab_dim)
         token_tensor = token_tensor.unsqueeze(0).expand(len(batch_img), 1, 1, 1)
-        token_tensor[:, :, eos_idx - 2, :] = vctx_soft_embeddings[
-            :, attr_idx,:
-        ].type(self.clip_model.dtype)
-        token_tensor[:, :, eos_idx - 1, :] = vctx_soft_embeddings[
-            :, obj_idx + self.offset, :
-        ].type(self.clip_model.dtype)
+
+        token_tensor[:, :, eos_idx - 2, :] = soft_embeddings[
+            attr_idx, :
+        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,0]
+        token_tensor[:, :, eos_idx - 1, :] = soft_embeddings[
+             obj_idx + self.offset, :
+        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,1]
 
         return token_tensor
 
@@ -151,7 +153,7 @@ def get_cocsp(train_dataset, config, device):
     vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim, vocab_sz).to(device)
+    vctx_encoder = VisualCtxEncoder(vis_dim).to(device)
 
     optimizer = torch.optim.Adam(
         [soft_embedding] + list(vctx_encoder.parameters()),

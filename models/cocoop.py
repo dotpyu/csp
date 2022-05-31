@@ -160,7 +160,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim, vocab_sz).to(device)
+    vctx_encoder = VisualCtxEncoder(vis_dim, n_ctx).to(device)
 
     offset = len(attributes)
 
