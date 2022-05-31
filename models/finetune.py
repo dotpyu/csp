@@ -60,7 +60,7 @@ class Finetune(CLIPInterface):
             clip_model,
             config,
             token_ids,
-            soft_embeddings=None,
+            soft_embeddings=torch.zeros([len(attributes)]),
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
