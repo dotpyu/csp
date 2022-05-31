@@ -10,6 +10,7 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 def get_model(train_dataset, config, device):
+
     if config.experiment_name == "coop":
         return coop(train_dataset, config, device)
 
