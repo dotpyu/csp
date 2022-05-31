@@ -103,10 +103,10 @@ class CoCSPInterface(CLIPInterface):
         '''
         token_tensor[:, :, eos_idx - 2, :] = soft_embeddings[
             attr_idx, :
-        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,0].unsqueeze(0).repeat(1,soft_embeddings.shape[1])
+        ].type(self.clip_model.dtype).unsqueeze(0).expand(len(batch_img),-1) + vctx[:,0].unsqueeze(0).expand(-1,soft_embeddings.shape[1])
         token_tensor[:, :, eos_idx - 1, :] = soft_embeddings[
              obj_idx + self.offset, :
-        ].type(self.clip_model.dtype).unsqueeze(0) + vctx[:,1].unsqueeze(0).repeat(1,soft_embeddings.shape[1])
+        ].type(self.clip_model.dtype).unsqueeze(0).expand(len(batch_img),-1) + vctx[:,1].unsqueeze(0).expand(1,soft_embeddings.shape[1])
 
         return token_tensor
 
