@@ -85,7 +85,7 @@ class Finetune(CLIPInterface):
     def forward(self, batch_img, idx):
         batch_img = batch_img.to(self.device)
 
-        tokenized = self.construct_token_tensors(idx)
+        tokenized = self.construct_token_tensors(idx).to(self.device)
 
         text_features = self.text_encoder(
             tokenized,
