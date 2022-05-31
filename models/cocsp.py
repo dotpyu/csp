@@ -101,8 +101,8 @@ class CoCSPInterface(CLIPInterface):
         RuntimeError: The size of tensor a (768) must match the size of tensor b (64) at non-singleton dimension 2
 
         '''
-        attr_emb = soft_embeddings[attr_idx, :].type(self.clip_model.dtype)
-        obj_emb = soft_embeddings[obj_idx + self.offset, :].type(self.clip_model.dtype)
+        attr_emb = soft_embeddings[attr_idx, :].type(self.clip_model.dtype).to(self.device)
+        obj_emb = soft_embeddings[obj_idx + self.offset, :].type(self.clip_model.dtype).to(self.device)
         # print(attr_emb.expand(len(batch_img),-1).shape)
 
         token_tensor[:, :, eos_idx - 2, :] = attr_emb.unsqueeze(0).expand(len(batch_img),-1,-1) + vctx[:,0].unsqueeze(-1).unsqueeze(-1).expand(-1,attr_emb.shape[0],attr_emb.shape[1])
