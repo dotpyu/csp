@@ -22,7 +22,7 @@ class VisualCtxEncoder(nn.Module):
         self.encoder = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
             ("relu", nn.ReLU(inplace=True)),
-            ("linear2", nn.Linear(vis_dim // 16, vocab_sz))
+            ("linear2", nn.Linear(vis_dim // 16, prompt_vocab_sz))
         ])).half()
 
     def forward(self, x):
