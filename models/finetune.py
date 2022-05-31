@@ -103,5 +103,5 @@ class Finetune(CLIPInterface):
             * normalized_img
             @ idx_text_features.t()
         )
-
+        print(logits)
         return logits
