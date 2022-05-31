@@ -57,6 +57,7 @@ class CLIPInterface(torch.nn.Module):
         for params in self.text_encoder.parameters():
             params.requires_grad = False
         self.clip_model.text_projection.requires_grad = False
+        self.text_encoder.token_embedding.requires_grad = False
 
         self.token_ids = token_ids
         self.soft_embeddings = soft_embeddings
