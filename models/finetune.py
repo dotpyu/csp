@@ -57,7 +57,7 @@ class Finetune(CLIPInterface):
         enable_pos_emb: bool = False,
     ):
         super().__init__(
-            clip_model,
+            clip_model.to(self.dtype),
             config,
             token_ids,
             soft_embeddings=torch.zeros([len(attributes)]),
@@ -70,6 +70,7 @@ class Finetune(CLIPInterface):
         self.attributes = attributes
         self.objects = objects
         self.prompt_template = prompt_template
+        self.dtype = torch.float32
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
@@ -82,22 +83,22 @@ class Finetune(CLIPInterface):
         return tokenized
 
     def forward(self, batch_img, idx):
-        batch_img = batch_img.to(self.device).half()
+        batch_img = batch_img.to(self.device).to(self.dtype)
 
         tokenized = self.construct_token_tensors(idx).to(self.device)
         text_features = self.text_encoder(
             tokenized,
             None,
             enable_pos_emb=True,
-        ).half()
+        ).to(self.device)
 
         _text_features = text_features / text_features.norm(
             dim=-1, keepdim=True
         )
         normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
         logits = (
-            self.clip_model.logit_scale.exp()
-            * normalized_img
+            self.clip_model.logit_scale.exp().to(self.dtype)
+            * normalized_img.half()
             @ _text_features.t()
         )
         return logits
