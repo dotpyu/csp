@@ -56,10 +56,10 @@ class CoCOOP(CLIPInterface):
         eos_idx = int(self.token_ids[0].argmax())
         token_tensor[:,:, eos_idx - 2, :] = self.frozen_embeddings[
             attr_idx
-        ].type(self.clip_model.dtype).unsqueeze(0).unsqueeze(0).repeat(1,len(batch_img), 1, 1)
+        ].type(self.clip_model.dtype)
         token_tensor[:,:, eos_idx - 1, :] = self.frozen_embeddings[
             obj_idx + self.offset
-            ].type(self.clip_model.dtype).unsqueeze(0).unsqueeze(0).repeat(1,len(batch_img), 1, 1)
+            ].type(self.clip_model.dtype)
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
