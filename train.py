@@ -61,7 +61,7 @@ def train_model(model, optimizer, train_dataset, config, device):
             batch_img, batch_target = batch[0], batch[3]
             batch_target = batch_target.to(device)
             batch_img = batch_img.to(device)
-            batch_feat = model.encode_image(batch_img.float()).half()
+            batch_feat = model.encode_image(batch_img.half())
 
             logits = model(batch_feat, train_pairs)
 
