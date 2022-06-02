@@ -26,7 +26,7 @@ class CoCOOP(CLIPInterface):
         enable_pos_emb: bool = False,
     ):
         super().__init__(
-            clip_model.half(),
+            clip_model,
             config,
             token_ids,
             soft_embeddings=soft_embeddings,
