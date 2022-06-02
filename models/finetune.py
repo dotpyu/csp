@@ -72,8 +72,8 @@ class Finetune(CLIPInterface):
         self.attributes = attributes
         self.objects = objects
         self.prompt_template = prompt_template
-        self.dtype = torch.float16
         self.text_encoder = self.text_encoder.half()
+        self.clip_model.visual = self.clip_model.visual.half()
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
