@@ -75,6 +75,7 @@ class Finetune(CLIPInterface):
             token_ids,
             soft_embeddings=torch.zeros([len(attributes)]),
             device=device,
+            dtype=torch.float32,
             enable_pos_emb=enable_pos_emb,
         )
         self.offset = offset
@@ -84,6 +85,7 @@ class Finetune(CLIPInterface):
         self.objects = objects
         self.prompt_template = prompt_template
         self.text_encoder = self.text_encoder.type(torch.float32)
+        self.visual = self.visual.type(torch.float32)
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
