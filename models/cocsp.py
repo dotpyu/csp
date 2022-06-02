@@ -75,6 +75,7 @@ class CoCSPInterface(CLIPInterface):
         self.offset = offset
         self.attr_dropout = nn.Dropout(attr_dropout)
         self.vctx_encoder = vctx_encoder.to(self.device)
+        self.text_encoder = self.text_encoder.to(self.dtype)
 
     def construct_token_tensors(self, batch_img, pair_idx):
 

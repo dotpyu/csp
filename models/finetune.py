@@ -86,7 +86,7 @@ class Finetune(CLIPInterface):
         self.attributes = attributes
         self.objects = objects
         self.prompt_template = prompt_template
-        self.text_encoder = self.text_encoder.to(self.dtype)
+        # self.text_encoder = self.text_encoder.to(self.dtype)
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
@@ -113,8 +113,8 @@ class Finetune(CLIPInterface):
         )
         normalized_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
         logits = (
-            self.clip_model.logit_scale.exp().to(self.dtype)
-            * normalized_img.half()
+            self.clip_model.logit_scale.exp()#.to(self.dtype)
+            * normalized_img
             @ _text_features.t()
         )
         return logits

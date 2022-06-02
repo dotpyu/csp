@@ -42,7 +42,7 @@ class CustomTextEncoder(torch.nn.Module):
 
         text_features = text_features.type(self.dtype)
         x = (
-            text_features + self.positional_embedding#.type(self.dtype)
+            text_features + self.positional_embedding.type(self.dtype)
             if enable_pos_emb
             else text_features
         )

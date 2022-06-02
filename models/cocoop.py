@@ -37,6 +37,7 @@ class CoCOOP(CLIPInterface):
         self.frozen_embeddings = frozen_embeddings
         self.offset = offset
         self.vctx_encoder = vctx_encoder
+        self.text_encoder = self.text_encoder.to(self.dtype)
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
