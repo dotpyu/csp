@@ -26,11 +26,12 @@ class CoCOOP(CLIPInterface):
         enable_pos_emb: bool = False,
     ):
         super().__init__(
-            clip_model,
+            clip_model.half(),
             config,
             token_ids,
             soft_embeddings=soft_embeddings,
             device=device,
+            dtype=torch.float16,
             enable_pos_emb=enable_pos_emb,
         )
         self.frozen_embeddings = frozen_embeddings

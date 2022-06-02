@@ -61,12 +61,13 @@ class CoCSPInterface(CLIPInterface):
         enable_pos_emb=True,
         attr_dropout=0.0,
     ):
-        soft_embeddings = soft_embeddings.unsqueeze(0).repeat(len(config.train_batch_size), 1, 1)
+        soft_embeddings = soft_embeddings.unsqueeze(0).repeat(config.train_batch_size, 1, 1)
         super().__init__(
-            clip_model,
+            clip_model.half(),
             config,
             class_token_ids,
             soft_embeddings,
+            dtype=torch.float16,
             device=device,
             enable_pos_emb=enable_pos_emb,
         )

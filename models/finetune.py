@@ -54,6 +54,7 @@ class Finetune(CLIPInterface):
         token_ids: torch.tensor,
         prompt_template="a photo of [attr] [obj]",
         device: torch.device = "cuda:0",
+        dtype=torch.float16,
         enable_pos_emb: bool = False,
     ):
         super().__init__(
@@ -62,6 +63,7 @@ class Finetune(CLIPInterface):
             token_ids,
             soft_embeddings=torch.zeros([len(attributes)]),
             device=device,
+            dtype=dtype,
             enable_pos_emb=enable_pos_emb,
         )
         self.offset = offset
