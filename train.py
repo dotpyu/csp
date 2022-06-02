@@ -15,6 +15,13 @@ from datasets.read_datasets import DATASET_PATHS
 from models.compositional_modules import get_model
 from utils import set_seed
 
+try:
+    from apex import amp
+    APEX_AVAILABLE = True
+except ModuleNotFoundError:
+    APEX_AVAILABLE = False
+
+
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -71,9 +78,13 @@ def train_model(model, optimizer, train_dataset, config, device):
             loss = loss / config.gradient_accumulation_steps
 
             # backward pass
-            loss.backward()
+            if config.amp:
+                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss.backward()
 
-            # weights update
+            # weights update[
             if ((bid + 1) % config.gradient_accumulation_steps == 0) or \
                     (bid + 1 == len(train_dataloader)):
                 optimizer.step()
@@ -201,8 +212,8 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("--finetune", help="finetune the model", action="store_true")
+    parser.add_argument("--amp", help="mix precision training", action="store_true")
     parser.add_argument("--seed", help="seed value", default=0, type=int)
-
     parser.add_argument(
         "--gradient_accumulation_steps",
         help="number of gradient accumulation steps",
@@ -211,7 +222,7 @@ if __name__ == "__main__":
     )
 
     config = parser.parse_args()
-
+    config.amp = config.amp and APEX_AVAILABLE
     # set the seed value
     set_seed(config.seed)
 

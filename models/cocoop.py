@@ -31,13 +31,12 @@ class CoCOOP(CLIPInterface):
             token_ids,
             soft_embeddings=soft_embeddings,
             device=device,
-            dtype=torch.float16,
+            dtype=torch.float32,
             enable_pos_emb=enable_pos_emb,
         )
         self.frozen_embeddings = frozen_embeddings
         self.offset = offset
         self.vctx_encoder = vctx_encoder
-        self.text_encoder = self.text_encoder.half()
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
@@ -85,7 +84,7 @@ class CoCOOP(CLIPInterface):
         for img_id, img_feat in enumerate(_batch_img):
             text_features = self.text_encoder(
                 self.token_ids,
-                token_tensors[img_id],
+                token_tensors[img_id].float(),
                 enable_pos_emb=self.enable_pos_emb,
             )
             _text_features = text_features / text_features.norm(dim=-1, keepdim=True)

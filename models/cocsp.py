@@ -67,7 +67,7 @@ class CoCSPInterface(CLIPInterface):
             config,
             class_token_ids,
             soft_embeddings,
-            dtype=torch.float16,
+            dtype=torch.float32,
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
@@ -75,7 +75,6 @@ class CoCSPInterface(CLIPInterface):
         self.offset = offset
         self.attr_dropout = nn.Dropout(attr_dropout)
         self.vctx_encoder = vctx_encoder.to(self.device)
-        self.text_encoder = self.text_encoder.half()
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
@@ -132,7 +131,7 @@ class CoCSPInterface(CLIPInterface):
         for img_id, img_feat in enumerate(_batch_img):
             text_features = self.text_encoder(
                 self.token_ids,
-                token_tensors[img_id],
+                token_tensors[img_id].float(),
                 enable_pos_emb=self.enable_pos_emb,
             )
             _text_features = text_features / text_features.norm(dim=-1, keepdim=True)

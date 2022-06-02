@@ -7,6 +7,13 @@ import torch.nn as nn
 from clip_modules.interface import CLIPInterface
 from clip_modules.model_loader import load
 
+try:
+    from apex import amp
+    APEX_AVAILABLE = True
+except ModuleNotFoundError:
+    APEX_AVAILABLE = False
+
+
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -36,9 +43,15 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
         device=device,
         enable_pos_emb=True,
     )
+
     optimizer = torch.optim.Adam(
         ft.parameters(), lr=config.lr, weight_decay=config.weight_decay
     )
+    if config.amp:
+        ft, optimizer = amp.initialize(
+            ft, optimizer, opt_level="O2",
+            keep_batchnorm_fp32=True, loss_scale="dynamic"
+        )
 
     return ft, optimizer
 
@@ -72,7 +85,6 @@ class Finetune(CLIPInterface):
         self.attributes = attributes
         self.objects = objects
         self.prompt_template = prompt_template
-        self.text_encoder = self.text_encoder.half()
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
