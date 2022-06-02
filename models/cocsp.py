@@ -89,23 +89,24 @@ class CoCSPInterface(CLIPInterface):
         return token_tensor
 
     def forward(self, batch_img, idx):
+
         batch_img = batch_img.to(self.device).to(self.dtype)
+        emb_dim = batch_img.shape[-1]
         token_tensors = self.construct_token_tensors(batch_img, idx)
 
-        # token_tensors => (batch_sz, prompt_len, vocab_dim)
+        # token_tensors => # [BS, CAND_SZ, vocab_sz, vocab_dim]
         _batch_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
         _batch_img = _batch_img.unsqueeze(-1)
 
-        batch_size, prompt_len, vocab_dim = token_tensors.shape
-
-        flat_token_tensors = token_tensors.view(batch_size * prompt_len, vocab_dim)
+        batch_size, prompt_len, vocab_sz, vocab_dim = token_tensors.shape
+        flat_token_tensors = token_tensors.view(batch_size * prompt_len, vocab_sz, vocab_dim)
         text_features = text_encoder(
             self.token_ids,
             flat_token_tensors.float(),
             enable_pos_emb=self.enable_pos_emb,
         )
         _text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-        _text_features = _text_features.view(batch_size, prompt_len, vocab_dim)
+        _text_features = _text_features.view(batch_size, prompt_len, emb_dim)
 
         logits = torch.matmul(_text_features, _batch_img).squeeze(-1)
         logits *= self.clip_model.logit_scale.exp()

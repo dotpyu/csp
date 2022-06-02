@@ -28,16 +28,14 @@ class CoCOOP(CoCSPInterface):
         super().__init__(
             clip_model,
             config,
-            token_ids,
-            soft_embeddings=soft_embeddings,
+            offset,
+            soft_embeddings,
+            vctx_encoder,
+            class_token_ids=token_ids,
             device=device,
-            dtype=torch.float32,
             enable_pos_emb=enable_pos_emb,
         )
         self.frozen_embeddings = frozen_embeddings
-        self.offset = offset
-        self.vctx_encoder = vctx_encoder
-        self.text_encoder = self.text_encoder.to(self.dtype)
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
