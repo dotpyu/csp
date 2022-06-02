@@ -49,7 +49,8 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
     )
     if config.amp:
         ft, optimizer = amp.initialize(
-            ft, optimizer, opt_level="O2", loss_scale="dynamic"
+            ft, optimizer, opt_level="O2",
+            keep_batchnorm_fp32=False, loss_scale="dynamic"
         )
 
     return ft, optimizer
