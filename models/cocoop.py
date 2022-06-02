@@ -38,7 +38,6 @@ class CoCOOP(CLIPInterface):
         self.offset = offset
         self.vctx_encoder = vctx_encoder
         self.text_encoder = self.text_encoder.half()
-        self.clip_model.visual = self.clip_model.visual.half()
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
