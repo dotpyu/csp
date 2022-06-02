@@ -7,11 +7,11 @@ class CustomTextEncoder(torch.nn.Module):
         super().__init__()
         self.dtype = dtype
 
-        self.transformer = clip_model.transformer
-        self.positional_embedding = clip_model.positional_embedding
-        self.ln_final = clip_model.ln_final
-        self.text_projection = clip_model.text_projection
-        self.token_embedding = clip_model.token_embedding
+        self.transformer = clip_model.transformer.to(dtype)
+        self.positional_embedding = clip_model.positional_embedding.to(dtype)
+        self.ln_final = clip_model.ln_final.to(dtype)
+        self.text_projection = clip_model.text_projection.to(dtype)
+        self.token_embedding = clip_model.token_embedding.to(dtype)
 
     def tokenize(self, text):
         return torch.cat([clip.tokenize(tok) for tok in text])
