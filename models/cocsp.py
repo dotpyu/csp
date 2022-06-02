@@ -76,7 +76,7 @@ class CoCSPInterface(CLIPInterface):
         '''
         # reshape vctx to be the same shape of soft_embeddings
 
-        soft_embeddings = self.soft_embeddings.unsqueeze(0).expand(batch_img.shape[0], 1, 1)
+        soft_embeddings = self.soft_embeddings.unsqueeze(0).expand(batch_img.shape[0], -1, -1)
         soft_embeddings = soft_embeddings.to(self.device)
         soft_embeddings[:, :self.offset, :] += vctx[:, 0].unsqueeze(-1).unsqueeze(-1).repeat(1, self.offset, 1)
         soft_embeddings[:, self.offset:, :] += vctx[:, 1].unsqueeze(-1).unsqueeze(-1).repeat(1, soft_embeddings.shape[1] - self.offset, 1)
