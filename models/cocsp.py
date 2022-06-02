@@ -43,7 +43,6 @@ class CoCSPInterface(CLIPInterface):
         enable_pos_emb=True,
         attr_dropout=0.0,
     ):
-        soft_embeddings = soft_embeddings.unsqueeze(0).repeat(config.train_batch_size, 1, 1)
         super().__init__(
             clip_model,
             config,
@@ -76,7 +75,9 @@ class CoCSPInterface(CLIPInterface):
 
         '''
         # reshape vctx to be the same shape of soft_embeddings
-        soft_embeddings = self.soft_embeddings.to(self.device)
+
+        soft_embeddings = self.soft_embeddings.unsqueeze(0).repeat(config.train_batch_size, 1, 1)
+        soft_embeddings = soft_embeddings.to(self.device)
         soft_embeddings[:, :self.offset, :] += vctx[:, 0].unsqueeze(-1).unsqueeze(-1).repeat(1, self.offset, 1)
         soft_embeddings[:, self.offset:, :] += vctx[:, 1].unsqueeze(-1).unsqueeze(-1).repeat(1, soft_embeddings.shape[1] - self.offset, 1)
 
@@ -91,16 +92,16 @@ class CoCSPInterface(CLIPInterface):
     def forward(self, batch_img, idx):
 
         batch_img = batch_img.to(self.device).to(self.dtype)
-        emb_dim = batch_img.shape[-1]
         token_tensors = self.construct_token_tensors(batch_img, idx)
 
         # token_tensors => # [BS, CAND_SZ, vocab_sz, vocab_dim]
+        emb_dim = batch_img.shape[-1]
         _batch_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
         _batch_img = _batch_img.unsqueeze(-1)
 
         batch_size, prompt_len, vocab_sz, vocab_dim = token_tensors.shape
         flat_token_tensors = token_tensors.view(batch_size * prompt_len, vocab_sz, vocab_dim)
-        text_features = text_encoder(
+        text_features = self.text_encoder(
             self.token_ids,
             flat_token_tensors.float(),
             enable_pos_emb=self.enable_pos_emb,
