@@ -77,7 +77,6 @@ class Finetune(CLIPInterface):
             token_ids,
             soft_embeddings=torch.zeros([len(attributes)]),
             device=device,
-            dtype=dtype,
             enable_pos_emb=enable_pos_emb,
         )
         self.offset = offset

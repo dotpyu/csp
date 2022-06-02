@@ -7,12 +7,12 @@ import torch.nn as nn
 from clip_modules.interface import CLIPInterface
 from clip_modules.model_loader import load
 from collections import OrderedDict
-from models.cocsp import VisualCtxEncoder
+from models.cocsp import VisualCtxEncoder, CoCSPInterface
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-class CoCOOP(CLIPInterface):
+class CoCOOP(CoCSPInterface):
     def __init__(
         self,
         clip_model,
@@ -72,29 +72,29 @@ class CoCOOP(CLIPInterface):
 
         return token_tensor
 
-    def forward(self, batch_img, idx):
-        batch_img = batch_img.to(self.device)
-
-        token_tensors = self.construct_token_tensors(batch_img, idx)
-
-        cand_sz = token_tensors.shape[1]
-        logits = torch.empty([len(batch_img), cand_sz], device=self.device, dtype=self.clip_model.dtype)
-        # token_tensors => (batch_sz, prompt_len, vocab_dim)
-        _batch_img =  batch_img /batch_img.norm(dim=-1, keepdim=True).to(self.dtype)
-        # TODO: Parallelize without loops
-
-        for img_id, img_feat in enumerate(_batch_img):
-            text_features = self.text_encoder(
-                self.token_ids,
-                token_tensors[img_id].float(),
-                enable_pos_emb=self.enable_pos_emb,
-            )
-            _text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-            logits[img_id] = img_feat @ _text_features.t()
-
-        logits *= self.clip_model.logit_scale.exp()
-
-        return logits
+    # def forward(self, batch_img, idx):
+    #     batch_img = batch_img.to(self.device)
+    #
+    #     token_tensors = self.construct_token_tensors(batch_img, idx)
+    #
+    #     cand_sz = token_tensors.shape[1]
+    #     logits = torch.empty([len(batch_img), cand_sz], device=self.device, dtype=self.clip_model.dtype)
+    #     # token_tensors => (batch_sz, prompt_len, vocab_dim)
+    #     _batch_img =  batch_img /batch_img.norm(dim=-1, keepdim=True).to(self.dtype)
+    #     # TODO: Parallelize without loops
+    #
+    #     for img_id, img_feat in enumerate(_batch_img):
+    #         text_features = self.text_encoder(
+    #             self.token_ids,
+    #             token_tensors[img_id].float(),
+    #             enable_pos_emb=self.enable_pos_emb,
+    #         )
+    #         _text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+    #         logits[img_id] = img_feat @ _text_features.t()
+    #
+    #     logits *= self.clip_model.logit_scale.exp()
+    #
+    #     return logits
 
     # def forward(self, batch_img, idx):
     #     batch_img = batch_img.to(self.device)

@@ -12,6 +12,7 @@ from collections import OrderedDict
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
+
 class VisualCtxEncoder(nn.Module):
     """
     Visual Context Encoder
@@ -27,25 +28,6 @@ class VisualCtxEncoder(nn.Module):
 
     def forward(self, x):
         return self.encoder(x)
-
-
-def logits_compute(vc_text, img):
-    """
-    vc_text is a pytorch tensor of (batch_size, candidate_size, embed_dim)
-    img is a pytorch tensor of (batch_size, embed_dim)
-
-    this function computes the matrix multiplication for each batch of the vc_text of the respective image
-    """
-    batch_size = vc_text.size(0)
-    candidate_size = vc_text.size(1)
-    embed_dim = vc_text.size(2)
-    img = img.unsqueeze(1).repeat(1, candidate_size, 1)
-    img = img.view(batch_size * candidate_size, embed_dim)
-    vc_text = vc_text.view(batch_size * candidate_size, embed_dim)
-    logits = torch.bmm(img, vc_text.transpose(1, 2))
-    logits = logits.view(batch_size, candidate_size, -1)
-    return logits
-
 
 
 class CoCSPInterface(CLIPInterface):
@@ -89,18 +71,6 @@ class CoCSPInterface(CLIPInterface):
 
         eos_idx = int(self.token_ids[0].argmax())
 
-        # soft_embeddings = self.attr_dropout(self.soft_embeddings)
-        # print(soft_embeddings.shape)
-        # print(token_tensor.shape)
-        # print(vctx.shape)
-
-        # torch.Size([360, 768])
-        # torch.Size([64, 1262, 8, 768])
-        # torch.Size([64, 2]) # scalar bias
-        # vctx_soft_embeddings = soft_embeddings.unsqueeze(0) + vctx  # (batch, vocab_sz, vocab_dim)
-
-        # Token Tensors old: (label_sz, vocab_sz, vocab_dim) -> (batch, label_sz, vocab_sz, vocab_dim)
-
         '''
         RuntimeError: The size of tensor a (768) must match the size of tensor b (64) at non-singleton dimension 2
 
@@ -122,21 +92,22 @@ class CoCSPInterface(CLIPInterface):
         batch_img = batch_img.to(self.device).to(self.dtype)
         token_tensors = self.construct_token_tensors(batch_img, idx)
 
-        cand_sz = token_tensors.shape[1]
-        logits = torch.empty([len(batch_img), cand_sz], device=self.device, dtype=self.clip_model.dtype)
         # token_tensors => (batch_sz, prompt_len, vocab_dim)
         _batch_img = batch_img / batch_img.norm(dim=-1, keepdim=True)
+        _batch_img = _batch_img.unsqueeze(-1)
 
-        # TODO: Parallelize without loop
-        for img_id, img_feat in enumerate(_batch_img):
-            text_features = self.text_encoder(
-                self.token_ids,
-                token_tensors[img_id].float(),
-                enable_pos_emb=self.enable_pos_emb,
-            )
-            _text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-            logits[img_id] = img_feat @ _text_features.t()
+        batch_size, prompt_len, vocab_dim = token_tensors.shape
 
+        flat_token_tensors = token_tensors.view(batch_size * prompt_len, vocab_dim)
+        text_features = text_encoder(
+            self.token_ids,
+            flat_token_tensors.float(),
+            enable_pos_emb=self.enable_pos_emb,
+        )
+        _text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        _text_features = _text_features.view(batch_size, prompt_len, vocab_dim)
+
+        logits = torch.matmul(_text_features, _batch_img).squeeze(-1)
         logits *= self.clip_model.logit_scale.exp()
 
         return logits
