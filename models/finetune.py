@@ -42,7 +42,7 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
         prompt_template=prompt_template,
         device=device,
         enable_pos_emb=True,
-    ).float()
+    )
 
     optimizer = torch.optim.Adam(
         ft.parameters(), lr=config.lr, weight_decay=config.weight_decay
@@ -67,6 +67,7 @@ class Finetune(CLIPInterface):
         token_ids: torch.tensor,
         prompt_template="a photo of [attr] [obj]",
         device: torch.device = "cuda:0",
+        dtype=torch.float16,
         enable_pos_emb: bool = False,
     ):
         super().__init__(
@@ -75,7 +76,7 @@ class Finetune(CLIPInterface):
             token_ids,
             soft_embeddings=torch.zeros([len(attributes)]),
             device=device,
-            dtype=torch.float32,
+            dtype=dtype,
             enable_pos_emb=enable_pos_emb,
         )
         self.offset = offset
@@ -84,8 +85,8 @@ class Finetune(CLIPInterface):
         self.attributes = attributes
         self.objects = objects
         self.prompt_template = prompt_template
-        self.text_encoder = self.text_encoder.type(torch.float32)
-        self.clip_model.visual = self.clip_model.visual.type(torch.float32)
+        self.text_encoder = self.text_encoder.to(dtype)
+        self.clip_model.visual = self.clip_model.visual.to(dtype)
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
