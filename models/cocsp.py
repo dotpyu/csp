@@ -16,14 +16,14 @@ class VisualCtxEncoder(nn.Module):
     """
     Visual Context Encoder
     """
-    def __init__(self, vis_dim, prompt_vocab_sz=2):
+    def __init__(self, vis_dim, prompt_vocab_sz=2, dtype=torch.float32):
         super(VisualCtxEncoder, self).__init__()
 
         self.encoder = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
             ("relu", nn.ReLU(inplace=True)),
             ("linear2", nn.Linear(vis_dim // 16, prompt_vocab_sz))
-        ])).half()
+        ])).to(dtype)
 
     def forward(self, x):
         return self.encoder(x)
@@ -118,8 +118,7 @@ class CoCSPInterface(CLIPInterface):
         return token_tensor
 
     def forward(self, batch_img, idx):
-        batch_img = batch_img.to(self.device)
-
+        batch_img = batch_img.to(self.device).to(self.dtype)
         token_tensors = self.construct_token_tensors(batch_img, idx)
 
         cand_sz = token_tensors.shape[1]

@@ -41,6 +41,7 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
         None,
         prompt_template=prompt_template,
         device=device,
+        dtype=torch.float16,
         enable_pos_emb=True,
     )
 
@@ -85,6 +86,7 @@ class Finetune(CLIPInterface):
         self.attributes = attributes
         self.objects = objects
         self.prompt_template = prompt_template
+        self.text_encoder = self.text_encoder.to(self.dtype)
 
     def construct_token_tensors(self, pair_idx):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
