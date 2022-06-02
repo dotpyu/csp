@@ -42,7 +42,7 @@ class CoCOOP(CLIPInterface):
 
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
 
-        vctx = self.vctx_encoder(batch_img)  # (batch, vocab_sz)
+        vctx = self.vctx_encoder(batch_img.to(self.dtype))  # (batch, vocab_sz)
         vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_dim)
         soft_embeddings = self.soft_embeddings.unsqueeze(0)  # (1, n_ctx, vocab_dim)
         vctx_soft_embeddings = soft_embeddings + vctx  # (batch, vocab_sz, vocab_dim)
