@@ -41,17 +41,15 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
         None,
         prompt_template=prompt_template,
         device=device,
-        dtype=torch.float32,
         enable_pos_emb=True,
-    ).float()
+    )
 
-    optimizer = torch.optim.AdamW(
+    optimizer = torch.optim.Adam(
         ft.parameters(), lr=config.lr, weight_decay=config.weight_decay
     )
     if config.amp:
         ft, optimizer = amp.initialize(
-            ft, optimizer, opt_level="O2",
-            keep_batchnorm_fp32=True, loss_scale="dynamic"
+            ft, optimizer, opt_level="O2", loss_scale="dynamic"
         )
 
     return ft, optimizer
@@ -68,7 +66,6 @@ class Finetune(CLIPInterface):
         token_ids: torch.tensor,
         prompt_template="a photo of [attr] [obj]",
         device: torch.device = "cuda:0",
-        dtype=torch.float16,
         enable_pos_emb: bool = False,
     ):
         super().__init__(
