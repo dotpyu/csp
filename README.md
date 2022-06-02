@@ -18,7 +18,7 @@ If you find CSP helpful, please cite our paper:
 ## Setup
 ```
 conda create --name clip python=3.7
-conda activate clip
+conda activate clipz
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 pip3 install ftfy regex tqdm scipy pandas
 pip3 install git+https://github.com/openai/CLIP.git
