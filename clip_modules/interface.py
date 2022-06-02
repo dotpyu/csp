@@ -63,7 +63,7 @@ class CLIPInterface(torch.nn.Module):
         self.soft_embeddings = soft_embeddings
 
     def encode_image(self, imgs):
-        return self.clip_model.encode_image(imgs)
+        return self.clip_model.encode_image(imgs.to(self.dtype))
 
     def encode_text(self, text, enable_pos_emb=True):
         return self.text_encoder.encode_text(
