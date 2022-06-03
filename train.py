@@ -56,7 +56,7 @@ def train_model(model, optimizer, train_dataset, config, device):
     i = 0
     train_losses = []
 
-    torch.autograd.set_detect_anomaly(True)
+    # torch.autograd.set_detect_anomaly(True)
 
     if config.amp:
         scaler = amp.GradScaler()
