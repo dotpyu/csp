@@ -92,7 +92,7 @@ class CoCSPInterface(CLIPInterface):
         # print(attr_emb.expand(len(batch_img),-1).shape)
 
         token_tensor[:, :, eos_idx - 2, :] = attr_emb
-        token_tensor[:, :, eos_idx - 1, :] =
+        token_tensor[:, :, eos_idx - 1, :] = obj_emb
 
         return token_tensor
 
