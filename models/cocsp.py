@@ -131,10 +131,9 @@ def get_cocsp(train_dataset, config, device):
         offset
     ) = csp_init(train_dataset, config, device)
 
-    vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim).to(device)
+    vctx_encoder = VisualCtxEncoder(vis_dim, dtype=torch.float16 if config.amp else torch.float32).to(device)
 
     optimizer = torch.optim.Adam(
         [soft_embedding] + list(vctx_encoder.parameters()),
