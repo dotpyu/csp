@@ -78,17 +78,22 @@ class CoCSPInterface(CLIPInterface):
         # reshape vctx to be the same shape of soft_embeddings
 
         soft_embeddings = self.soft_embeddings.unsqueeze(0).expand(batch_img.shape[0], -1, -1)
+
         attr_visual_ctx = vctx[:, 0].unsqueeze(-1).unsqueeze(-1).expand(-1, self.offset, -1)
         obj_visual_ctx = vctx[:, 1].unsqueeze(-1).unsqueeze(-1).expand(-1, soft_embeddings.shape[1] - self.offset, -1)
-        soft_embeddings[:, :self.offset, :] = soft_embeddings[:, :self.offset, :] + attr_visual_ctx
-        soft_embeddings[:, self.offset:, :] = soft_embeddings[:, self.offset:, :] + obj_visual_ctx
+        attr_emb = soft_embeddings[:, :self.offset, :]
+        obj_emb = soft_embeddings[:, self.offset:, :]
 
-        attr_emb = soft_embeddings[:, attr_idx, :].type(self.clip_model.dtype)
-        obj_emb = soft_embeddings[:, obj_idx + self.offset, :].type(self.clip_model.dtype)
+        attr_emb = attr_emb + attr_visual_ctx
+        obj_emb = obj_emb + obj_visual_ctx
+
+        attr_emb = attr_emb[:, attr_idx, :].type(self.clip_model.dtype)
+        obj_emb = obj_emb[:, obj_idx, :].type(self.clip_model.dtype)
         # print(attr_emb.expand(len(batch_img),-1).shape)
 
         token_tensor[:, :, eos_idx - 2, :] = attr_emb
-        token_tensor[:, :, eos_idx - 1, :] = obj_emb
+        token_tensor[:, :, eos_idx - 1, :] =
+
         return token_tensor
 
     def forward(self, batch_img, idx):
