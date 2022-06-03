@@ -42,13 +42,14 @@ class CoCSPInterface(CLIPInterface):
         device="cuda:0",
         enable_pos_emb=True,
         attr_dropout=0.0,
+        dtype=torch.float16,
     ):
         super().__init__(
             clip_model,
             config,
             class_token_ids,
             soft_embeddings,
-            dtype=torch.float32,
+            dtype=dtype,
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
@@ -76,7 +77,6 @@ class CoCSPInterface(CLIPInterface):
 
         '''
         # reshape vctx to be the same shape of soft_embeddings
-
         soft_embeddings = self.soft_embeddings.unsqueeze(0).expand(batch_img.shape[0], -1, -1)
 
         attr_visual_ctx = vctx[:, 0].unsqueeze(-1).unsqueeze(-1).expand(-1, self.offset, -1)
