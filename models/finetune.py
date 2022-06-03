@@ -13,7 +13,7 @@ try:
 except ModuleNotFoundError:
     APEX_AVAILABLE = False
 
-
+torch.backends.cudnn.enabled = True
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
