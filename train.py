@@ -16,7 +16,7 @@ from models.compositional_modules import get_model
 from utils import set_seed
 
 try:
-    from apex import amp
+    from torch.cuda import amp
     APEX_AVAILABLE = True
 except ModuleNotFoundError:
     APEX_AVAILABLE = False

@@ -8,7 +8,7 @@ from clip_modules.interface import CLIPInterface
 from clip_modules.model_loader import load
 
 try:
-    from apex import amp
+    from torch.cuda import amp
     APEX_AVAILABLE = True
 except ModuleNotFoundError:
     APEX_AVAILABLE = False
@@ -51,7 +51,7 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
     if config.amp:
         ft, optimizer = amp.initialize(
             ft, optimizer, opt_level="O2",
-            keep_batchnorm_fp32=True, loss_scale="dynamic"
+            keep_batchnorm_fp32=False, loss_scale="dynamic"
         )
 
     return ft, optimizer
