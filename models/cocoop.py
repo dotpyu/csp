@@ -36,6 +36,7 @@ class CoCOOP(CoCSPInterface):
             enable_pos_emb=enable_pos_emb,
         )
         self.frozen_embeddings = frozen_embeddings
+        self.soft_embeddings = soft_embeddings.to(device)
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
