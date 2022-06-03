@@ -58,6 +58,9 @@ def train_model(model, optimizer, train_dataset, config, device):
 
     torch.autograd.set_detect_anomaly(True)
 
+    if config.amp:
+        scaler = amp.GradScaler()
+
     for i in range(config.epochs):
         progress_bar = tqdm.tqdm(
             total=len(train_dataloader), desc="epoch % 3d" % (i + 1)
@@ -79,15 +82,17 @@ def train_model(model, optimizer, train_dataset, config, device):
 
             # backward pass
             if config.amp:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
+                scaler.scale(loss).backward()
             else:
                 loss.backward()
 
             # weights update[
             if ((bid + 1) % config.gradient_accumulation_steps == 0) or \
                     (bid + 1 == len(train_dataloader)):
-                optimizer.step()
+                if config.amp:
+                    scaler.step(optimizer)
+                    scaler.update()
+                else: optimizer.step()
                 optimizer.zero_grad()
 
             epoch_train_losses.append(loss.item())
