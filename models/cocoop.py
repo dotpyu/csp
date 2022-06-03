@@ -66,7 +66,7 @@ class CoCOOP(CoCSPInterface):
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
         token_tensor = token_tensor.repeat(len(batch_img), 1, 1, 1)
-        token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] += vctx_soft_embeddings.unsqueeze(1).expand(-1, len(attr_idx), -1, -1)  # [BS, CAND_SZ, vocab_sz, vocab_dim]
+        token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] = token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] + vctx_soft_embeddings.unsqueeze(1).expand(-1, len(attr_idx), -1, -1)  # [BS, CAND_SZ, vocab_sz, vocab_dim]
 
         return token_tensor
 
