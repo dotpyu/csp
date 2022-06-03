@@ -96,7 +96,7 @@ def csp_init(
         eos_idx = tokenized[idx].argmax()
         soft_embedding[idx, :] = torch.mean(rep[1:eos_idx, :], axis=0)
 
-    soft_embedding = nn.Parameter(soft_embedding, device=device)
+    soft_embedding = nn.Parameter(soft_embedding.to(device))
 
     class_token_ids = clip.tokenize(
         [prompt_template],
