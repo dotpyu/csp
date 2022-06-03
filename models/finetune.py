@@ -43,7 +43,7 @@ def get_ft(train_dataset, config, device, prompt_template="a photo of [attr] [ob
         device=device,
         dtype=torch.float32,
         enable_pos_emb=True,
-    ).double()
+    )
 
     optimizer = torch.optim.Adam(
         ft.parameters(), lr=config.lr, weight_decay=config.weight_decay
