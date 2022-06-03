@@ -99,6 +99,9 @@ class Finetune(CLIPInterface):
         tokenized = clip.tokenize(prompts, context_length=self.config.context_length)
         return tokenized
 
+    def encode_image(self, imgs):
+        return self.clip_model.encode_image(imgs.half())
+
     def forward(self, batch_img, idx):
         batch_img = batch_img.to(self.device).to(self.dtype)
 
