@@ -42,7 +42,7 @@ class CoCSPInterface(CLIPInterface):
         device="cuda:0",
         enable_pos_emb=True,
         attr_dropout=0.0,
-        dtype=torch.float16,
+        dtype=torch.float32,
     ):
         super().__init__(
             clip_model,
