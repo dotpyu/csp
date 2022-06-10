@@ -92,7 +92,8 @@ def train_model(model, optimizer, train_dataset, config, device):
                 if config.amp:
                     scaler.step(optimizer)
                     scaler.update()
-                else: optimizer.step()
+                else:
+                    optimizer.step()
                 optimizer.zero_grad()
 
             epoch_train_losses.append(loss.item())

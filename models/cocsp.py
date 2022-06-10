@@ -60,6 +60,9 @@ class CoCSPInterface(CLIPInterface):
         self.text_encoder = self.text_encoder.to(self.dtype)
         # self.soft_embeddings = self.soft_embeddings.to(self.device)
 
+    def encode_image(self, imgs):
+        return self.clip_model.encode_image(imgs)
+
     def construct_token_tensors(self, batch_img, pair_idx):
 
         vctx = self.vctx_encoder(batch_img)  # (batch, 2)
