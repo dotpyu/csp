@@ -41,7 +41,7 @@ def mmain(args):
     print(best_test)
     avg_results = np.mean(best_test, axis=0) # 4
     print('='*50)
-    print(args.dataset, args.model)
+    print(args.dataset)
     print('best epoch: ', best_epoch_val)
     output_string = "{:.2f} , {:.2f}  {:.2f}  " \
                     ", {:.2f}   {:.2f}  , {:.2f} " \
