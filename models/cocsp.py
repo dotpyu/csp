@@ -17,7 +17,7 @@ class VisualCtxEncoder(nn.Module):
     """
     Visual Context Encoder
     """
-    def __init__(self, vis_dim, prompt_vocab_sz=2, dtype=torch.float32):
+    def __init__(self, vis_dim, prompt_vocab_sz=2, dtype=torch.float16):
         super(VisualCtxEncoder, self).__init__()
 
         self.encoder = nn.Sequential(OrderedDict([
@@ -42,7 +42,7 @@ class CoCSPInterface(CLIPInterface):
         device="cuda:0",
         enable_pos_emb=True,
         attr_dropout=0.0,
-        dtype=torch.float32,
+        dtype=torch.float16,
     ):
         super().__init__(
             clip_model,

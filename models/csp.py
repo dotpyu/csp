@@ -9,6 +9,7 @@ from clip_modules.model_loader import load
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
+
 class CSPInterface(CLIPInterface):
     def __init__(
         self,
