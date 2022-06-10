@@ -43,8 +43,15 @@ def mmain(args):
     print('='*50)
     print(args.dataset, args.model)
     print('best epoch: ', best_epoch_val)
+    output_string = "{:.2f} , {:.2f}  {:.2f}  " \
+                    ", {:.2f}   {:.2f}  , {:.2f} " \
+                    "{:.2f}  , {:.2f} ".format(avg_results[0], sem(best_test[:, 0]),
+                                                      avg_results[1], sem(best_test[:, 1]),
+                                                      avg_results[2], sem(best_test[:, 2]),
+                                                      avg_results[3], sem(best_test[:, 3]),
+                                                      )
 
-    output_string = "{:.2f}, {:.2f}, {:.2f}, {:.2f};".format(avg_results[1], avg_results[0], avg_results[2], avg_results[3])
+    # output_string = "{:.2f}, {:.2f}, {:.2f}, {:.2f};".format(avg_results[1], avg_results[0], avg_results[2], avg_results[3])
     print(output_string)
 
 
