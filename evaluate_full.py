@@ -644,6 +644,11 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
+        "--finetune",
+        help="evaluate finetune mode",
+        action="store_true",
+    )
+    parser.add_argument(
         "--bias",
         help="eval bias",
         type=float,
@@ -690,8 +695,8 @@ if __name__ == "__main__":
     print(f"experiment name: {config.experiment_name}")
 
     if config.experiment_name != 'clip':
-        if not os.path.exists(config.soft_embeddings):
-            print(f'{config.soft_embeddings} not found')
+        if not os.path.exists(config.model_path):
+            print(f'{config.model_path} not found')
             print('code exiting!')
             exit(0)
 
@@ -721,14 +726,23 @@ if __name__ == "__main__":
             enable_pos_emb=True)
         val_text_rep = clip_baseline(model, val_dataset, config, device)
         test_text_rep = clip_baseline(model, test_dataset, config, device)
+    elif config.finetune:
+        # slight mod to accomondate loaded models
+        model, optimizer = get_model(val_dataset, config, device)
+        model.load_state_dict(torch.load(config.model_path))
+
+        val_text_rep = clip_baseline(
+            model, val_dataset, config, device)
+        test_text_rep = clip_baseline(
+            model, test_dataset, config, device)
     else:
+        # slight mod to accomondate loaded models
         model, optimizer = get_model(val_dataset, config, device)
         model.load_state_dict(torch.load(config.model_path))
         val_text_rep = compute_representations(
             model, val_dataset, config, device)
         test_text_rep = compute_representations(
             model, test_dataset, config, device)
-
     print('evaluating on the validation set')
     if config.open_world and config.threshold is None:
         evaluator = Evaluator(val_dataset, model=None)
@@ -837,9 +851,9 @@ if __name__ == "__main__":
 
     if config.experiment_name != 'clip':
         if config.open_world:
-            result_path = config.soft_embeddings[:-2] + "open.calibrated.json"
+            result_path = config.model_path[:-2] + "open.calibrated.json"
         else:
-            result_path = config.soft_embeddings[:-2] + "closed.json"
+            result_path = config.model_path[:-2] + "closed.json"
 
         with open(result_path, 'w+') as fp:
             json.dump(results, fp)

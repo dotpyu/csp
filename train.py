@@ -237,8 +237,8 @@ if __name__ == "__main__":
 
     if os.path.exists(config.save_path):
         print('file already exists')
-        print('exiting!')
-        exit(0)
+        #print('exiting!')
+        #exit(0)
 
     # This should work for mit-states, ut-zappos, and maybe c-gqa.
     dataset_path = DATASET_PATHS[config.dataset]
