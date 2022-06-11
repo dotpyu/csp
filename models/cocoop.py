@@ -126,7 +126,6 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     clip_model, preprocess = load(
         config.clip_model, device=device, context_length=config.context_length
     )
-
     allattrs = train_dataset.attrs
     allobj = train_dataset.objs
 
@@ -167,7 +166,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim, ctx_vectors.shape[-1]).to(device)
+    vctx_encoder = VisualCtxEncoder(vis_dim, ctx_vectors.shape[-1], dtype=torch.float32).to(device)
 
     offset = len(attributes)
 
