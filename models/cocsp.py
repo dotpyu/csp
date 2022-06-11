@@ -57,7 +57,7 @@ class CoCSPInterface(CLIPInterface):
         self.offset = offset
         self.attr_dropout = nn.Dropout(attr_dropout)
         self.vctx_encoder = vctx_encoder.to(self.device)
-        self.text_encoder = self.text_encoder.to(self.dtype)
+        #self.text_encoder = self.text_encoder.to(self.dtype)
         # self.soft_embeddings = self.soft_embeddings.to(self.device)
 
     def encode_image(self, imgs):
@@ -71,7 +71,7 @@ class CoCSPInterface(CLIPInterface):
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype).unsqueeze(0).repeat(len(batch_img),1,1,1)
+        ).unsqueeze(0).repeat(len(batch_img),1,1,1)#.type(self.clip_model.dtype)
 
         eos_idx = int(self.token_ids[0].argmax())
 
@@ -90,8 +90,8 @@ class CoCSPInterface(CLIPInterface):
         attr_emb = attr_emb + attr_visual_ctx
         obj_emb = obj_emb + obj_visual_ctx
 
-        attr_emb = attr_emb[:, attr_idx, :].type(self.clip_model.dtype)
-        obj_emb = obj_emb[:, obj_idx, :].type(self.clip_model.dtype)
+        attr_emb = attr_emb[:, attr_idx, :]#.type(self.clip_model.dtype)
+        obj_emb = obj_emb[:, obj_idx, :]#.type(self.clip_model.dtype)
         # print(attr_emb.expand(len(batch_img),-1).shape)
 
         token_tensor[:, :, eos_idx - 2, :] = attr_emb
@@ -101,7 +101,7 @@ class CoCSPInterface(CLIPInterface):
 
     def forward(self, batch_img, idx):
 
-        batch_img = batch_img.to(self.device).to(self.dtype)
+        batch_img = batch_img.to(self.device)#.to(self.dtype)
         token_tensors = self.construct_token_tensors(batch_img, idx)
 
         # token_tensors => # [BS, CAND_SZ, vocab_sz, vocab_dim]

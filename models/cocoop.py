@@ -42,27 +42,27 @@ class CoCOOP(CoCSPInterface):
 
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
 
-        vctx = self.vctx_encoder(batch_img.to(self.dtype))  # (batch, vocab_sz)
+        vctx = self.vctx_encoder(batch_img)#.to(self.dtype))  # (batch, vocab_sz)
         vctx = vctx.unsqueeze(1)  # (batch, 1, vocab_dim)
         soft_embeddings = self.soft_embeddings.unsqueeze(0)  # (1, n_ctx, vocab_dim)
         vctx_soft_embeddings = soft_embeddings + vctx  # (batch, vocab_sz, vocab_dim)
-        vctx_soft_embeddings = vctx_soft_embeddings.type(self.clip_model.dtype) # (batch, n_ctx, vocab_dim)
+        #vctx_soft_embeddings = vctx_soft_embeddings.type(self.clip_model.dtype) # (batch, n_ctx, vocab_dim)
 
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
 
         # Problem here
         token_tensor = self.clip_model.token_embedding(
             class_token_ids.to(self.device)
-        ).type(self.clip_model.dtype).unsqueeze(0)  # (batch, prompt_len, vocab_dim)
+        ).unsqueeze(0)  #.type(self.clip_model.dtype) (batch, prompt_len, vocab_dim)
 
 
         eos_idx = int(self.token_ids[0].argmax())
         token_tensor[:,:, eos_idx - 2, :] = self.frozen_embeddings[
             attr_idx
-        ].type(self.clip_model.dtype) # (batch, prompt_len, vocab_dim)
+        ]#.type(self.clip_model.dtype) # (batch, prompt_len, vocab_dim)
         token_tensor[:,:, eos_idx - 1, :] = self.frozen_embeddings[
             obj_idx + self.offset
-            ].type(self.clip_model.dtype) # (batch, prompt_len, vocab_dim)
+            ]#.type(self.clip_model.dtype) # (batch, prompt_len, vocab_dim)
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
