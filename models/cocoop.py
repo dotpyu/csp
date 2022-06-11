@@ -36,7 +36,7 @@ class CoCOOP(CoCSPInterface):
             enable_pos_emb=enable_pos_emb,
         )
         self.frozen_embeddings = frozen_embeddings
-        self.soft_embeddings = soft_embeddings.to(device)
+        # self.soft_embeddings = soft_embeddings.to(device)
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
@@ -122,6 +122,7 @@ class CoCOOP(CoCSPInterface):
 
 
 def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
+
     clip_model, preprocess = load(
         config.clip_model, device=device, context_length=config.context_length
     )
@@ -155,7 +156,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
                            context_length=config.context_length).to(device)
     with torch.no_grad():
         embedding = clip_model.token_embedding(prompt)
-
+    embedding = embedding.float()
     ctx_vectors = embedding[0, 1 : 1 + n_ctx, :]
 
     token_ids = clip.tokenize(prompt_template,
