@@ -42,7 +42,7 @@ class CoCSPInterface(CLIPInterface):
         device="cuda:0",
         enable_pos_emb=True,
         attr_dropout=0.0,
-        dtype=torch.float16,
+        dtype=torch.float32,
     ):
         super().__init__(
             clip_model,
@@ -137,7 +137,7 @@ def get_cocsp(train_dataset, config, device):
 
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim, dtype=torch.float16).to(device)
+    vctx_encoder = VisualCtxEncoder(vis_dim, dtype=torch.float32).to(device)
 
     optimizer = torch.optim.Adam(
         [soft_embedding] + list(vctx_encoder.parameters()),
