@@ -72,8 +72,8 @@ def train_model(model, optimizer, train_dataset, config, device):
             batch_target = batch_target.to(device)
             batch_img = batch_img.to(device)
             batch_feat = model.encode_image(batch_img)
-
-            logits = model(batch_feat, train_pairs)
+           
+            with torch.autocast(device_type="cuda"): logits = model(batch_feat, train_pairs)
 
             loss = loss_fn(logits, batch_target)
 

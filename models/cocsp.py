@@ -17,7 +17,7 @@ class VisualCtxEncoder(nn.Module):
     """
     Visual Context Encoder
     """
-    def __init__(self, vis_dim, prompt_vocab_sz=2, dtype=torch.float32):
+    def __init__(self, vis_dim, prompt_vocab_sz=2, dtype=torch.float16):
         super(VisualCtxEncoder, self).__init__()
 
         self.encoder = nn.Sequential(OrderedDict([
@@ -42,7 +42,7 @@ class CoCSPInterface(CLIPInterface):
         device="cuda:0",
         enable_pos_emb=True,
         attr_dropout=0.0,
-        dtype=torch.float32,
+        dtype=torch.float16,
     ):
         super().__init__(
             clip_model,
@@ -127,6 +127,7 @@ class CoCSPInterface(CLIPInterface):
 
 def get_cocsp(train_dataset, config, device):
 
+
     (
         clip_model,
         soft_embedding,
@@ -136,7 +137,7 @@ def get_cocsp(train_dataset, config, device):
 
     vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim, dtype=torch.float32).to(device)
+    vctx_encoder = VisualCtxEncoder(vis_dim, dtype=torch.float16).to(device)
 
     optimizer = torch.optim.Adam(
         [soft_embedding] + list(vctx_encoder.parameters()),
@@ -144,7 +145,7 @@ def get_cocsp(train_dataset, config, device):
         weight_decay=config.weight_decay,
     )
 
-    interface = CoCSPInterface(
+    with torch.autocast(device_type="cuda" if "cuda" in device or "gpu" in device else "cpu"): interface = CoCSPInterface(
         clip_model,
         config,
         offset,

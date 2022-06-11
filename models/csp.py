@@ -70,6 +70,7 @@ def csp_init(
     prompt_template="a photo of X X",
 ):
 
+    
     clip_model, preprocess = load(
         config.clip_model, device=device, context_length=config.context_length
     )
