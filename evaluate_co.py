@@ -368,19 +368,8 @@ class Evaluator:
         return stats
 
 
-def compute_representations(model, test_dataset, config, device):
-    """Function computes the attribute-object representations using
-    the text encoder.
-    Args:
-        model (nn.Module): model
-        test_dataset (CompositionDataset): CompositionDataset object
-            with phase = 'test'
-        config (argparse.ArgumentParser): config/args
-        device (str): device type cpu/cuda:0
-    Returns:
-        torch.Tensor: returns the tensor with the attribute-object
-            representations
-    """
+def compute_vctx_representations(model, test_dataset, config, device):
+
     obj2idx = test_dataset.obj2idx
     attr2idx = test_dataset.attr2idx
     pairs = torch.tensor([(attr2idx[attr], obj2idx[obj])
@@ -391,6 +380,7 @@ def compute_representations(model, test_dataset, config, device):
     )
 
     rep = torch.Tensor().to(device).type(model.dtype)
+
     with torch.no_grad():
         for batch_attr_obj in tqdm(test_pairs):
             batch_attr_obj = batch_attr_obj.to(device)
@@ -409,7 +399,8 @@ def compute_representations(model, test_dataset, config, device):
 
     return rep
 
-def compute_vctx_representations(model, test_dataset, config, device):
+
+def compute_representations(model, test_dataset, config, device):
     """Function computes the attribute-object representations using
     the text encoder.
     Args:
@@ -488,6 +479,55 @@ def clip_baseline(model, test_dataset, config, device):
             rep = torch.cat((rep, text_features), dim=0)
 
     return rep
+
+
+def predict_vctx_logits(model, dataset, device, config):
+
+    model.eval()
+    all_attr_gt, all_obj_gt, all_pair_gt = (
+        [],
+        [],
+        [],
+    )
+
+    obj2idx = dataset.obj2idx
+    attr2idx = dataset.attr2idx
+    pairs = torch.tensor([(attr2idx[attr], obj2idx[obj])
+                          for attr, obj in dataset.pairs]).to(device)
+
+    test_pairs = np.array_split(
+        pairs, len(pairs) // config.text_encoder_batch_size
+    )
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=config.eval_batch_size,
+        shuffle=False)
+    all_logits = torch.Tensor()
+    with torch.no_grad():
+        for idx, data in tqdm(
+            enumerate(dataloader), total=len(dataloader), desc="Testing"
+        ):
+            batch_img = data[0].to(device)
+            batch_feat = model.encode_image(batch_img)
+
+            logits = model(batch_feat, test_pairs)
+
+            attr_truth, obj_truth, pair_truth = data[1], data[2], data[3]
+            logits = logits.cpu()
+            all_logits = torch.cat([all_logits, logits], dim=0)
+
+            all_attr_gt.append(attr_truth)
+            all_obj_gt.append(obj_truth)
+            all_pair_gt.append(pair_truth)
+
+    all_attr_gt, all_obj_gt, all_pair_gt = (
+        torch.cat(all_attr_gt).to("cpu"),
+        torch.cat(all_obj_gt).to("cpu"),
+        torch.cat(all_pair_gt).to("cpu"),
+    )
+
+    return all_logits, all_attr_gt, all_obj_gt, all_pair_gt
 
 
 def predict_logits(model, text_rep, dataset, device, config):
@@ -685,6 +725,11 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
+        "--finetune",
+        help="evaluate finetune mode",
+        action="store_true",
+    )
+    parser.add_argument(
         "--bias",
         help="eval bias",
         type=float,
@@ -697,7 +742,14 @@ if __name__ == "__main__":
         default=1,
     )
     parser.add_argument(
-        "--soft_embeddings",
+        "--model_path",
+        help="location for vctx model",
+        type=str,
+        default="./soft_embeddings.pt",
+    )
+
+    parser.add_argument(
+        "--se_path",
         help="location for softembeddings",
         type=str,
         default="./soft_embeddings.pt",
@@ -731,8 +783,8 @@ if __name__ == "__main__":
     print(f"experiment name: {config.experiment_name}")
 
     if config.experiment_name != 'clip':
-        if not os.path.exists(config.soft_embeddings):
-            print(f'{config.soft_embeddings} not found')
+        if not os.path.exists(config.model_path):
+            print(f'{config.model_path} not found')
             print('code exiting!')
             exit(0)
 
@@ -750,29 +802,20 @@ if __name__ == "__main__":
                                       split='compositional-split-natural',
                                       open_world=config.open_world)
     # get the model and the text rep
-    if config.experiment_name == 'clip':
-        clip_model, preprocess = load(
-            config.clip_model, device=device, context_length=config.context_length)
-
-        model = CLIPInterface(
-            clip_model,
-            config,
-            token_ids=None,
-            device=device,
-            enable_pos_emb=True)
-        val_text_rep = clip_baseline(model, val_dataset, config, device)
-        test_text_rep = clip_baseline(model, test_dataset, config, device)
-    else:
+    if "coc" in config.experiment_name:
+        # slight mod to accomondate loaded models
         model, optimizer = get_model(val_dataset, config, device)
+        model.load_vctx_encoder(torch.load(config.model_path))
+        se = torch.load(config.se_path)['soft_embeddings']
+        model.set_soft_embeddings(se)
 
-        soft_embs = torch.load(config.soft_embeddings)['soft_embeddings']
-        model.set_soft_embeddings(soft_embs)
-        val_text_rep = compute_representations(
-            model, val_dataset, config, device)
-        test_text_rep = compute_representations(
-            model, test_dataset, config, device)
-
+        # val_text_rep = compute_vctx_representations(
+        #     model, val_dataset, config, device)
+        # test_text_rep = compute_vctx_representations(
+        #     model, test_dataset, config, device)
+    else: raise NotImplementedError('not implemented')
     print('evaluating on the validation set')
+
     if config.open_world and config.threshold is None:
         evaluator = Evaluator(val_dataset, model=None)
         feasibility_path = os.path.join(
@@ -791,8 +834,8 @@ if __name__ == "__main__":
         best_th = -10
         val_stats = None
         with torch.no_grad():
-            all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-                model, val_text_rep, val_dataset, device, config)
+            all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_vctx_logits(
+                model, val_dataset, device, config)
             for th in thresholds:
                 temp_logits = threshold_with_feasibility(
                     all_logits, val_dataset.seen_mask, threshold=th, feasiblity=unseen_scores)
@@ -821,8 +864,8 @@ if __name__ == "__main__":
             feasibility_path,
             map_location='cpu')['feasibility']
         with torch.no_grad():
-            all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-                model, val_text_rep, val_dataset, device, config)
+            all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_vctx_logits(
+                model, val_dataset, device, config)
             if config.open_world:
                 print('using threshold: ', best_th)
                 all_logits = threshold_with_feasibility(
@@ -845,8 +888,8 @@ if __name__ == "__main__":
     print('evaluating on the test set')
     with torch.no_grad():
         evaluator = Evaluator(test_dataset, model=None)
-        all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-            model, test_text_rep, test_dataset, device, config)
+        all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_vctx_logits(
+            model, test_dataset, device, config)
         if config.open_world and best_th is not None:
             print('using threshold: ', best_th)
             all_logits = threshold_with_feasibility(
@@ -880,9 +923,9 @@ if __name__ == "__main__":
 
     if config.experiment_name != 'clip':
         if config.open_world:
-            result_path = config.soft_embeddings[:-2] + "open.calibrated.json"
+            result_path = config.model_path[:-2] + "open.calibrated.json"
         else:
-            result_path = config.soft_embeddings[:-2] + "closed.json"
+            result_path = config.model_path[:-2] + "closed.json"
 
         with open(result_path, 'w+') as fp:
             json.dump(results, fp)

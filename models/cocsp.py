@@ -60,6 +60,9 @@ class CoCSPInterface(CLIPInterface):
         #self.text_encoder = self.text_encoder.to(self.dtype)
         # self.soft_embeddings = self.soft_embeddings.to(self.device)
 
+    def load_vctx_encoder(self, vctx_encoder):
+        self.vctx_encoder = vctx_encoder.to(self.device)
+
     def encode_image(self, imgs):
         return self.clip_model.encode_image(imgs)
 
