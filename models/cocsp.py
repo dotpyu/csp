@@ -27,7 +27,7 @@ class VisualCtxEncoder(nn.Module):
         ])).to(dtype)
 
     def forward(self, x):
-        return self.encoder(x.to(self.dtype))
+        return self.encoder(x)
 
 
 class CoCSPInterface(CLIPInterface):
@@ -105,7 +105,7 @@ class CoCSPInterface(CLIPInterface):
     def forward(self, batch_img, idx):
 
         batch_img = batch_img.to(self.device)#.to(self.dtype)
-        token_tensors = self.construct_token_tensors(batch_img, idx)
+        token_tensors = self.construct_token_tensors(batch_img.to(self.dtype), idx)
 
         # token_tensors => # [BS, CAND_SZ, vocab_sz, vocab_dim]
         emb_dim = batch_img.shape[-1]
