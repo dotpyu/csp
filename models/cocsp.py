@@ -27,7 +27,7 @@ class VisualCtxEncoder(nn.Module):
         ])).to(dtype)
 
     def forward(self, x):
-        return self.encoder(x)
+        return self.encoder(x.to(self.dtype))
 
 
 class CoCSPInterface(CLIPInterface):
