@@ -805,7 +805,7 @@ if __name__ == "__main__":
     if "coc" in config.experiment_name:
         # slight mod to accomondate loaded models
         model, optimizer = get_model(val_dataset, config, device)
-        model.load_vctx_encoder(torch.load(config.model_path))
+        model.load_vctx_encoder(torch.load(config.model_path)['vis_context_encoder'])
         se = torch.load(config.se_path)['soft_embeddings']
         model.set_soft_embeddings(se)
 
