@@ -496,19 +496,19 @@ def predict_vctx_logits(model, dataset, device, config):
                           for attr, obj in dataset.pairs]).to(device)
 
 
-
-
     dataloader = DataLoader(
         dataset,
         batch_size=config.eval_batch_size,
         shuffle=False)
+
     all_logits = torch.Tensor()
+
     with torch.no_grad():
         for idx, data in tqdm(
             enumerate(dataloader), total=len(dataloader), desc="Testing"
         ):
             batch_img = data[0].to(device)
-            batch_feat = model.encode_image(batch_img)
+            batch_feat = model.encode_image(batch_img.float())
 
             logits = model(batch_feat, pairs)
 
