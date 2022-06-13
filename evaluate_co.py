@@ -495,9 +495,8 @@ def predict_vctx_logits(model, dataset, device, config):
     pairs = torch.tensor([(attr2idx[attr], obj2idx[obj])
                           for attr, obj in dataset.pairs]).to(device)
 
-    test_pairs = np.array_split(
-        pairs, len(pairs) // config.text_encoder_batch_size
-    )
+
+
 
     dataloader = DataLoader(
         dataset,
@@ -511,7 +510,7 @@ def predict_vctx_logits(model, dataset, device, config):
             batch_img = data[0].to(device)
             batch_feat = model.encode_image(batch_img)
 
-            logits = model(batch_feat, test_pairs)
+            logits = model(batch_feat, pairs)
 
             attr_truth, obj_truth, pair_truth = data[1], data[2], data[3]
             logits = logits.cpu()
