@@ -24,9 +24,22 @@ cudnn.benchmark = True
 
 
 se_path = {
-    "mit-states": "/users/pyu12/data/bats/projects/clip-labeler/mit-states/{:d}/soft_embeddings_epoch_20.pt",
-    "ut-zappos": "/users/pyu12/data/bats/projects/clip-labeler/vitl14_utzappos/{:d}/soft_embeddings_epoch_13.pt",
-    "cgqa": "/users/pyu12/data/bats/projects/clip-labeler/vitl14_cgqa/{:d}/soft_embeddings_epoch_20.pt"
+    "mit-states": "/users/pyu12/data/bats/projects/clip-labeler/mit-states/{:s}/soft_embeddings_epoch_{:d}.pt",
+    "ut-zappos": "/users/pyu12/data/bats/projects/clip-labeler/vitl14_utzappos/{:s}/soft_embeddings_epoch_{:d}.pt",
+    "cgqa": "/users/pyu12/data/bats/projects/clip-labeler/vitl14_cgqa/{:s}/soft_embeddings_epoch_{:d}.pt"
+}
+
+epochs = {
+    'coop' : {
+        'mit-states': 19,
+        'ut-zappos': 19,
+        'cgqa': 19
+    },
+    'csp' : {
+        'mit-states': 20,
+        'ut-zappos': 13,
+        'cgqa': 20
+    },
 }
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -285,7 +298,7 @@ if __name__ == "__main__":
 
 
     # soft_embedding path assemble here:
-    se = dc(se_path[config.dataset]).format(config.seed)
+    se = dc(se_path[config.dataset]).format("coop_" + str(config.seed) if config.experiment_name=='coop' else str(config.seed), epochs[config.experiment_name][config.dataset])
     if config.experiment_name != 'clip':
         if not os.path.exists(se):
             print(f'{se} not found')
