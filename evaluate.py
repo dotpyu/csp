@@ -409,47 +409,6 @@ def compute_representations(model, test_dataset, config, device):
 
     return rep
 
-def compute_vctx_representations(model, test_dataset, config, device):
-    """Function computes the attribute-object representations using
-    the text encoder.
-    Args:
-        model (nn.Module): model
-        test_dataset (CompositionDataset): CompositionDataset object
-            with phase = 'test'
-        config (argparse.ArgumentParser): config/args
-        device (str): device type cpu/cuda:0
-    Returns:
-        torch.Tensor: returns the tensor with the attribute-object
-            representations
-    """
-    obj2idx = test_dataset.obj2idx
-    attr2idx = test_dataset.attr2idx
-    pairs = torch.tensor([(attr2idx[attr], obj2idx[obj])
-                         for attr, obj in test_dataset.pairs]).to(device)
-
-    test_pairs = np.array_split(
-        pairs, len(pairs) // config.text_encoder_batch_size
-    )
-
-    rep = torch.Tensor().to(device).type(model.dtype)
-    with torch.no_grad():
-        for batch_attr_obj in tqdm(test_pairs):
-            batch_attr_obj = batch_attr_obj.to(device)
-            token_tensors = model.construct_token_tensors(batch_attr_obj)
-            text_features = model.text_encoder(
-                model.token_ids,
-                token_tensors,
-                enable_pos_emb=model.enable_pos_emb,
-            )
-
-            text_features = text_features / text_features.norm(
-                dim=-1, keepdim=True
-            )
-
-            rep = torch.cat([rep, text_features], dim=0)
-
-    return rep
-
 
 def clip_baseline(model, test_dataset, config, device):
     """Function to get the clip representations.
