@@ -106,9 +106,11 @@ def compute_coop_representations(model, test_dataset, config, device):
     with torch.no_grad():
         for tidx, t in enumerate(tqdm(target)):
 
+            token_tensor = token_embedding[tidx]
+            token_tensor = token_tensor.unsqueeze(0)
             text_features = model.text_encoder(
                 model.token_ids,
-                token_embedding[tidx],
+                token_tensor,
                 enable_pos_emb=True,
             )
 
