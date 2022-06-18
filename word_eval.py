@@ -325,7 +325,7 @@ if __name__ == "__main__":
             test_text_rep = compute_coop_representations(
                 model, test_dataset, config, device)
 
-    logits, gt = predict_logits(model, test_text_rep, dataset, device, config)
+    logits, gt = predict_logits(model, test_text_rep, test_dataset, device, config)
 
     top_res = {i: topk(gt, logits, k=i) for i in [1, 2, 3, 5, 10, 20]}
     suffix = '_obj' if config.eval_obj else '_attr'
