@@ -347,8 +347,8 @@ if __name__ == "__main__":
                 model, test_dataset, config, device)
 
     logits, gt = predict_logits(model, test_text_rep, test_dataset, device, config)
-
-    top_res = {i: topk(gt, logits, k=i, labels=list(range(len(test_dataset.attrs)))) for i in [1, 2, 3, 5, 10, 20]}
+    target = test_dataset.objs if config.eval_obj else test_dataset.attrs
+    top_res = {i: topk(gt, logits, k=i, labels=list(range(len(target)))) for i in [1, 2, 3, 5, 10, 20]}
     suffix = '_obj' if config.eval_obj else '_attr'
     if config.experiment_name != 'clip':
         result_path = './vocab_results/{:s}_{:s}_seed_{:d}_{:s}.json'.format(config.experiment_name, config.dataset, config.seed, suffix)
