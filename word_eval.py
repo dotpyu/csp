@@ -172,6 +172,8 @@ def clip_baseline(model, test_dataset, config, device):
         tokenized_prompts,
         len(tokenized_prompts) //
         config.text_encoder_batch_size)
+
+
     rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
         for batch_tokens in test_batch_tokens:
@@ -330,7 +332,7 @@ if __name__ == "__main__":
 
     logits, gt = predict_logits(model, test_text_rep, test_dataset, device, config)
 
-    top_res = {i: topk(gt, logits, k=i) for i in [1, 2, 3, 5, 10, 20]}
+    top_res = {i: topk(gt, logits, k=i, labels=list(range(len(test_dataset.attrs)))) for i in [1, 2, 3, 5, 10, 20]}
     suffix = '_obj' if config.eval_obj else '_attr'
     if config.experiment_name != 'clip':
         result_path = './vocab_results/{:s}_{:s}_seed_{:d}_{:s}.json'.format(config.experiment_name, config.dataset, config.seed, suffix)
