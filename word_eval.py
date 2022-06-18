@@ -45,6 +45,8 @@ def predict_logits(model, text_rep, dataset, device, config):
         batch_size=config.eval_batch_size,
         shuffle=False)
     all_logits = torch.Tensor()
+
+
     with torch.no_grad():
         for idx, data in tqdm(
             enumerate(dataloader), total=len(dataloader), desc="Testing"
@@ -87,7 +89,7 @@ def compute_coop_representations(model, test_dataset, config, device):
     :, 1: len(model.soft_embeddings) + 1, :
     ] = model.soft_embeddings.type(model.clip_model.dtype)
 
-
+    rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
         for tidx, t in enumerate(tqdm(target)):
 
@@ -124,6 +126,7 @@ def compute_csp_representations(model, test_dataset, config, device):
     token_embedding = model.clip_model.token_embedding(class_token_ids.to(device))
     replacement_idx = int(model.token_ids[0].argmax()) + back_offset
 
+    rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
         for tidx, t in enumerate(tqdm(target)):
 
