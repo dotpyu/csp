@@ -122,7 +122,7 @@ def compute_csp_representations(model, test_dataset, config, device):
     )
 
     token_embedding = model.clip_model.token_embedding(class_token_ids.to(device))
-    replacement_idx = int(self.token_ids[0].argmax()) + back_offset
+    replacement_idx = int(model.token_ids[0].argmax()) + back_offset
 
     with torch.no_grad():
         for tidx, t in enumerate(tqdm(target)):
