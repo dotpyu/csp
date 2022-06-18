@@ -209,7 +209,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--context_length",
         help="sets the context length of the clip model",
-        default=32,
+        default=16,
         type=int,
     )
     parser.add_argument(
@@ -293,13 +293,13 @@ if __name__ == "__main__":
     val_dataset = CompositionDataset(dataset_path,
                                      phase='val',
                                      split='compositional-split-natural',
-                                     open_world=config.open_world)
+                                     open_world=False)
 
     print('loading test dataset')
     test_dataset = CompositionDataset(dataset_path,
                                       phase='test',
                                       split='compositional-split-natural',
-                                      open_world=config.open_world)
+                                      open_world=False)
 
     # True attr/obj labels loaded from test/val dataset
 
