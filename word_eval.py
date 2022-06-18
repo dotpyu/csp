@@ -298,10 +298,10 @@ if __name__ == "__main__":
     # soft_embedding path assemble here:
 
     if config.experiment_name != 'clip':
+        se = dc(se_path[config.dataset]).format(
+            "coop_" + str(config.seed) if config.experiment_name == 'coop' else str(config.seed),
+            epochs[config.experiment_name][config.dataset])
         if not os.path.exists(se):
-            se = dc(se_path[config.dataset]).format(
-                "coop_" + str(config.seed) if config.experiment_name == 'coop' else str(config.seed),
-                epochs[config.experiment_name][config.dataset])
             print(f'{se} not found')
             print('code exiting!')
             exit(0)
