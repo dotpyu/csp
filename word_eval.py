@@ -94,7 +94,7 @@ def compute_coop_representations(model, test_dataset, config, device):
     # checked: "object" is single token id at 14115
 
     class_token_ids = clip.tokenize(
-        [prompts],
+        prompts,
         context_length=config.context_length,
     )
     token_embedding = model.clip_model.token_embedding(class_token_ids.to(device))
@@ -119,8 +119,6 @@ def compute_coop_representations(model, test_dataset, config, device):
             rep = torch.cat([rep, text_features], dim=0)
 
     return rep
-
-
 
 def compute_csp_representations(model, test_dataset, config, device):
 
@@ -298,9 +296,12 @@ if __name__ == "__main__":
 
 
     # soft_embedding path assemble here:
-    se = dc(se_path[config.dataset]).format("coop_" + str(config.seed) if config.experiment_name=='coop' else str(config.seed), epochs[config.experiment_name][config.dataset])
+
     if config.experiment_name != 'clip':
         if not os.path.exists(se):
+            se = dc(se_path[config.dataset]).format(
+                "coop_" + str(config.seed) if config.experiment_name == 'coop' else str(config.seed),
+                epochs[config.experiment_name][config.dataset])
             print(f'{se} not found')
             print('code exiting!')
             exit(0)
