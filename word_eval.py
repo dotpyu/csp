@@ -195,10 +195,10 @@ if __name__ == "__main__":
         "--weight_decay", help="weight decay", type=float, default=1e-05
     )
     parser.add_argument(
-        "--clip_model", help="clip model type", type=str, default="ViT-B/32"
+        "--clip_model", help="clip model type", type=str, default="ViT-L/14"
     )
     parser.add_argument(
-        "--eval_batch_size", help="eval batch size", default=64, type=int
+        "--eval_batch_size", help="eval batch size", default=16, type=int
     )
 
     parser.add_argument(
