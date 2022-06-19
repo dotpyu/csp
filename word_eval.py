@@ -174,22 +174,17 @@ def clip_baseline(model, test_dataset, config, device):
         torch.Tensor: returns the tensor with the attribute-object
             representations with clip model.
     """
-
     target = test_dataset.objs if config.eval_obj else test_dataset.attrs
     template = object_template if config.eval_obj else attribute_template
     prompts = [dc(template).replace('X', t) for t in target]
 
     tokenized_prompts = clip.tokenize(
         prompts, context_length=config.context_length)
-    test_batch_tokens = np.array_split(
-        tokenized_prompts,
-        len(tokenized_prompts) //
-        config.text_encoder_batch_size)
-
 
     rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
-        for batch_tokens in test_batch_tokens:
+        for batch_tokens in tokenized_prompts:
+            batch_tokens = batch_tokens.unsqueeze(0)
             batch_tokens = batch_tokens.to(device)
             _text_features = model.text_encoder(
                 batch_tokens, enable_pos_emb=True)
