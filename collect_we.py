@@ -43,7 +43,7 @@ def reg_eval(method, checkpoint):
         for task in tasks:
             ir = []
             for seed in seeds:
-                ir.append(float(load_acc(default_path + dc(cc_name).format(method, dataset, seed, task), checkpoint)))
+                ir.append(float(load_acc(default_path + dc(cc_name).format(method, dataset, seed, task), checkpoint))*100)
             res += [np.mean(ir), sem(ir)]
     print()
     print(dc(output_template).format(*res))
