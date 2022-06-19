@@ -30,7 +30,7 @@ def clip_eval(checkpoint):
     res = []
     for dataset in datasets:
         for task in tasks:
-            res.append(float(load_acc(default_path+dc(clip_name).format(dataset, task), checkpoint)))
+            res.append(float(load_acc(default_path+dc(clip_name).format(dataset, task), checkpoint))*100)
     print()
     print(dc(clip_template).format(*res))
     print()
