@@ -46,6 +46,7 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 attribute_template = 'A photo of X object'
 object_template = 'A photo of X'
+alternative_attr_template = 'The object in the photo is X'
 
 
 def predict_logits(model, text_rep, dataset, device, config):
@@ -89,6 +90,9 @@ def compute_coop_representations(model, test_dataset, config, device):
 
     target = test_dataset.objs if config.eval_obj else test_dataset.attrs
     template = object_template if config.eval_obj else attribute_template
+    if config.alter_attr:
+        target = test_dataset.attrs
+        template = alternative_attr_template
     prompts = [dc(template).replace('X', t) for t in target]
 
     # checked: "object" is single token id at 14115
@@ -128,6 +132,10 @@ def compute_csp_representations(model, test_dataset, config, device):
     template = object_template if config.eval_obj else attribute_template
     offset = len(test_dataset.attrs) if config.eval_obj else 0
     back_offset = -1 if config.eval_obj else -2
+    if config.alter_attr:
+        target = test_dataset.attrs
+        template = alternative_attr_template
+        back_offset = -1
 
     # checked: "object" is single token id at 14115
 
@@ -176,6 +184,9 @@ def clip_baseline(model, test_dataset, config, device):
     """
     target = test_dataset.objs if config.eval_obj else test_dataset.attrs
     template = object_template if config.eval_obj else attribute_template
+    if config.alter_attr:
+        target = test_dataset.attrs
+        template = alternative_attr_template
     prompts = [dc(template).replace('X', t) for t in target]
 
     tokenized_prompts = clip.tokenize(
@@ -235,6 +246,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--eval_obj",
         help="evaluate object vocab",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--alter_attr",
+        help="alternative attr prompt",
         action="store_true",
     )
 
@@ -345,6 +361,7 @@ if __name__ == "__main__":
     target = test_dataset.objs if config.eval_obj else test_dataset.attrs
     top_res = {i: topk(gt, logits, k=i, labels=list(range(len(target)))) for i in [1, 2, 3, 5, 10, 20]}
     suffix = '_obj' if config.eval_obj else '_attr'
+    if config.alter_attr: suffix += '_alter'
     if config.experiment_name != 'clip':
         result_path = './vocab_results/{:s}_{:s}_seed_{:d}_{:s}.json'.format(config.experiment_name, config.dataset, config.seed, suffix)
     else:
