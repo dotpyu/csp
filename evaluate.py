@@ -746,9 +746,9 @@ if __name__ == "__main__":
         model, _ = get_model(val_dataset, config, device)
         soft_embs = torch.load(config.soft_embeddings)['soft_embeddings']
         model.set_soft_embeddings(soft_embs)
-        val_text_rep = compute_representations(
+        val_text_rep = compute_coop_representations(
             model, val_dataset, config, device)
-        test_text_rep = compute_representations(
+        test_text_rep = compute_coop_representations(
             model, test_dataset, config, device)
 
     print('evaluating on the validation set')
