@@ -38,8 +38,8 @@ class CoCOOP(CoCSPInterface):
         )
         # self.comp_token_embedding = comp_token_embedding#.type(self.clip_model.dtype)
         # self.soft_embeddings = soft_embeddings.to(device)
-        self.start_token_embedding = comp_token_embedding[0, :]
-        self.comp_token_embedding = comp_token_embedding[1:, :]  # .type(clip_model.dtype)
+        self.start_token_embedding = comp_token_embedding[:, 0]
+        self.comp_token_embedding = comp_token_embedding[:, 1:]  # .type(clip_model.dtype)
         self.offset = offset
         self.ctx_len = len(self.soft_embeddings)
 
