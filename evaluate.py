@@ -723,14 +723,15 @@ if __name__ == "__main__":
         val_text_rep = clip_baseline(model, val_dataset, config, device)
         test_text_rep = clip_baseline(model, test_dataset, config, device)
     else:
-        model, optimizer = get_model(val_dataset, config, device)
-
+        vmodel, _ = get_model(val_dataset, config, device)
+        tmodel, _ = get_model(test_dataset, config, device)
         soft_embs = torch.load(config.soft_embeddings)['soft_embeddings']
-        model.set_soft_embeddings(soft_embs)
+        vmodel.set_soft_embeddings(soft_embs)
+        tmodel.set_soft_embeddings(soft_embs)
         val_text_rep = compute_representations(
-            model, val_dataset, config, device)
+            vmodel, val_dataset, config, device)
         test_text_rep = compute_representations(
-            model, test_dataset, config, device)
+            tmodel, test_dataset, config, device)
 
     print('evaluating on the validation set')
     if config.open_world and config.threshold is None:
@@ -752,7 +753,7 @@ if __name__ == "__main__":
         val_stats = None
         with torch.no_grad():
             all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-                model, val_text_rep, val_dataset, device, config)
+                vmodel, val_text_rep, val_dataset, device, config)
             for th in thresholds:
                 temp_logits = threshold_with_feasibility(
                     all_logits, val_dataset.seen_mask, threshold=th, feasiblity=unseen_scores)
@@ -782,7 +783,7 @@ if __name__ == "__main__":
             map_location='cpu')['feasibility']
         with torch.no_grad():
             all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-                model, val_text_rep, val_dataset, device, config)
+                vmodel, val_text_rep, val_dataset, device, config)
             if config.open_world:
                 print('using threshold: ', best_th)
                 all_logits = threshold_with_feasibility(
@@ -806,7 +807,7 @@ if __name__ == "__main__":
     with torch.no_grad():
         evaluator = Evaluator(test_dataset, model=None)
         all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-            model, test_text_rep, test_dataset, device, config)
+            tmodel, test_text_rep, test_dataset, device, config)
         if config.open_world and best_th is not None:
             print('using threshold: ', best_th)
             all_logits = threshold_with_feasibility(
