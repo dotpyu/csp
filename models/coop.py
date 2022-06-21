@@ -90,7 +90,7 @@ class COOP(CLIPInterface):
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
-        self.comp_token_embedding = comp_token_embedding.type(clip_model.dtype)
+        self.comp_token_embedding = comp_token_embedding#.type(clip_model.dtype)
         self.offset = offset
         self.ctx_len = len(self.soft_embeddings)
 
@@ -104,6 +104,6 @@ class COOP(CLIPInterface):
 
         token_tensor[
             :, 1 :self.ctx_len + 1, :
-        ] = self.soft_embeddings.type(self.clip_model.dtype)
+        ] = self.soft_embeddings#.type(self.clip_model.dtype)
 
         return token_tensor
