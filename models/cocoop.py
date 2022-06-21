@@ -67,7 +67,7 @@ class CoCOOP(CoCSPInterface):
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
-        token_tensor = dc(self.comp_token_embedding).to(self.device)
+        token_tensor = self.comp_token_embedding.data.to(self.device)
 
         token_tensor[
         :, 1: len(self.soft_embeddings) + 1, :
