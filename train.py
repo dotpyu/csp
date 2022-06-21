@@ -157,7 +157,8 @@ def save_soft_embeddings(model, config, epoch=None):
             )
 
         torch.save({"soft_embeddings": model.soft_embeddings}, soft_emb_path)
-        torch.save({"vis_context_encoder": model.vctx_encoder}, vctx_path)
+        if config.experiment_name == 'cocsp' or config.experiment_name == 'cocoop':
+            torch.save({"vis_context_encoder": model.vctx_encoder}, vctx_path)
 
 
 if __name__ == "__main__":
