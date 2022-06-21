@@ -118,15 +118,12 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
         ]
     )
 
-    comp_token_embedding = clip_model.token_embedding(tokenized.to(device))
+    with torch.no_grad():
+        comp_token_embedding = clip_model.token_embedding(tokenized.to(device)).detach().cpu()
 
     token_ids = clip.tokenize(prompt_template,
                               context_length=config.context_length).to(device)
 
-
-
-    token_ids = clip.tokenize(prompt_template,
-                              context_length=config.context_length).to(device)
 
     vocab_sz = soft_embedding.shape[-2]
     vis_dim = soft_embedding.shape[-1]

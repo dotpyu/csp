@@ -42,8 +42,8 @@ def coop(train_dataset, config, device, prompt_template="a photo of x x"):
             for tok in attributes + classes
         ]
     )
-
-    comp_token_embedding = clip_model.token_embedding(tokenized.to(device))
+    with torch.no_grad():
+        comp_token_embedding = clip_model.token_embedding(tokenized.to(device)).detach().cpu()
 
 
     token_ids = clip.tokenize(prompt_template,
