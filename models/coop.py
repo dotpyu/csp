@@ -37,7 +37,10 @@ def coop(train_dataset, config, device, prompt_template="a photo of x x"):
     compositions = [f"{attributes[pair[0]]} {classes[pair[1]]}" for pair in concerned_pairs]
 
     tokenized = torch.cat(
-        clip.tokenize(compositions, context_length=config.context_length)
+        [
+            clip.tokenize(f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}", context_length=config.context_length)
+            for pair in concerned_pairs
+        ]
     )
 
     with torch.no_grad():
