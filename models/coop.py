@@ -82,10 +82,6 @@ class COOP(CLIPInterface):
         device: torch.device = "cuda:0",
         enable_pos_emb: bool = False,
     ):
-        self.comp_token_embedding = comp_token_embedding.data.to(self.device).type(self.clip_model.dtype)
-        self.offset = offset
-        self.ctx_len = len(self.soft_embeddings)
-
         super().__init__(
             clip_model,
             config,
@@ -94,6 +90,9 @@ class COOP(CLIPInterface):
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
+        self.comp_token_embedding = comp_token_embedding.data.to(device).type(clip_model.dtype)
+        self.offset = offset
+        self.ctx_len = len(self.soft_embeddings)
 
 
 
