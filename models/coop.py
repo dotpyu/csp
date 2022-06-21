@@ -101,7 +101,7 @@ class COOP(CLIPInterface):
         token_tensor = self.comp_token_embedding.clone()
 
         token_tensor[
-            :, 1 :ctx_len + 1, :
+            :, 1 :self.ctx_len + 1, :
         ] = self.soft_embeddings.type(self.clip_model.dtype)
 
         return token_tensor
