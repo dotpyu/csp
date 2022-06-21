@@ -118,6 +118,8 @@ class CompositionDataset(Dataset):
         self.attr2idx = {attr: idx for idx, attr in enumerate(self.attrs)}
         self.pair2idx = {pair: idx for idx, pair in enumerate(self.pairs)}
 
+
+
         print('# train pairs: %d | # val pairs: %d | # test pairs: %d' % (len(
             self.train_pairs), len(self.val_pairs), len(self.test_pairs)))
         print('# train images: %d | # val images: %d | # test images: %d' %
@@ -139,6 +141,10 @@ class CompositionDataset(Dataset):
             self.attrs_by_obj_train = {k: [] for k in self.objs}
             for (a, o) in self.train_pairs:
                 self.attrs_by_obj_train[o].append(a)
+
+        #ADDITION TO MAKE COOP EASIER 6/21/22
+        self.concerned_pairs = torch.tensor([(self.attr2idx[attr], self.obj2idx[obj])
+                                             for attr, obj in self.train_pairs])
 
     def get_split_info(self):
         data = torch.load(self.root + '/metadata_{}.t7'.format(self.split))
