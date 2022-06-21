@@ -7,7 +7,7 @@ import tqdm
 
 META_PATH = "/users/pyu12/data/pyu12/model/{:s}/coop_models/{:d}/soft_embeddings_epoch_{:d}.pt"
 
-datasets = ['ut-zappos', 'mit-states'] #, 'cgqa'
+datasets = ['ut-zappos']#, 'mit-states'] #, 'cgqa'
 data_cap = ['ut', 'c', 'mit']
 models = ['vitb16', 'vitl14', 'r50', 'r101']
 formal_models = ['ViT-B/16', 'ViT-L/14', 'RN50', 'RN101']
