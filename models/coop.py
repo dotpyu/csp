@@ -90,8 +90,7 @@ class COOP(CLIPInterface):
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
-        self.start_token_embedding = comp_token_embedding[:,0,:].unsqueeze(0)
-        self.comp_token_embedding = comp_token_embedding[:,1:,:]#.type(clip_model.dtype)
+        self.comp_token_embedding = comp_token_embedding#.type(clip_model.dtype)
         self.offset = offset
         self.ctx_len = len(self.soft_embeddings)
 
@@ -101,7 +100,10 @@ class COOP(CLIPInterface):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
 
-        token_tensor = torch.hstack([self.start_token_embedding.data, self.soft_embeddings.unsqueeze(0).expand(self.comp_token_embedding.shape[0],-1,-1), self.comp_token_embedding.data])
+        token_tensor = self.comp_token_embedding.data.to(self.device)
 
+        token_tensor[
+            :, 1 :self.ctx_len + 1, :
+        ] = self.soft_embeddings#.type(self.clip_model.dtype)
 
         return token_tensor

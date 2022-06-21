@@ -129,6 +129,10 @@ class CompositionDataset(Dataset):
             [(pair, idx) for idx, pair in enumerate(self.train_pairs)]
         )
 
+        # ADDITION TO MAKE COOP EASIER 6/21/22
+        self.concerned_pairs = torch.tensor([(self.attr2idx[attr], self.obj2idx[obj])
+                                             for attr, obj in self.train_pairs])
+
         if self.open_world:
             mask = [1 if pair in set(self.train_pairs) else 0 for pair in self.pairs]
             self.seen_mask = torch.BoolTensor(mask) * 1.
@@ -142,9 +146,7 @@ class CompositionDataset(Dataset):
             for (a, o) in self.train_pairs:
                 self.attrs_by_obj_train[o].append(a)
 
-        #ADDITION TO MAKE COOP EASIER 6/21/22
-        self.concerned_pairs = torch.tensor([(self.attr2idx[attr], self.obj2idx[obj])
-                                             for attr, obj in self.train_pairs])
+
 
     def get_split_info(self):
         data = torch.load(self.root + '/metadata_{}.t7'.format(self.split))
