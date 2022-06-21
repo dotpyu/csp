@@ -36,7 +36,7 @@ class CoCOOP(CoCSPInterface):
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
-        self.comp_token_embedding = comp_token_embedding.to(self.device).type(self.clip_model.dtype)
+        self.comp_token_embedding = comp_token_embedding.type(self.clip_model.dtype)
         # self.soft_embeddings = soft_embeddings.to(device)
 
     def construct_token_tensors(self, batch_img, pair_idx):
@@ -67,7 +67,7 @@ class CoCOOP(CoCSPInterface):
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
-        token_tensor = dc(self.comp_token_embedding)
+        token_tensor = dc(self.comp_token_embedding).to(self.device)
 
         token_tensor[
         :, 1: len(self.soft_embeddings) + 1, :
