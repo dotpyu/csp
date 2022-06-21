@@ -124,14 +124,14 @@ class CompositionDataset(Dataset):
             self.train_pairs), len(self.val_pairs), len(self.test_pairs)))
         print('# train images: %d | # val images: %d | # test images: %d' %
               (len(self.train_data), len(self.val_data), len(self.test_data)))
-
+        self.concerned_pairs = torch.tensor([(self.attr2idx[attr], self.obj2idx[obj])
+                                             for attr, obj in self.train_pairs])
         self.train_pair_to_idx = dict(
             [(pair, idx) for idx, pair in enumerate(self.train_pairs)]
         )
 
         # ADDITION TO MAKE COOP EASIER 6/21/22
-        self.concerned_pairs = torch.tensor([(self.attr2idx[attr], self.obj2idx[obj])
-                                             for attr, obj in self.train_pairs])
+
 
         if self.open_world:
             mask = [1 if pair in set(self.train_pairs) else 0 for pair in self.pairs]

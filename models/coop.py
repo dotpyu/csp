@@ -37,11 +37,9 @@ def coop(train_dataset, config, device, prompt_template="a photo of x x"):
     compositions = [f"{attributes[pair[0]]} {classes[pair[1]]}" for pair in concerned_pairs]
 
     tokenized = torch.cat(
-        [
-            clip.tokenize(compositions, context_length=config.context_length)
-            for tok in attributes + classes
-        ]
+        clip.tokenize(compositions, context_length=config.context_length)
     )
+
     with torch.no_grad():
         comp_token_embedding = clip_model.token_embedding(tokenized.to(device)) # half precision
 
