@@ -34,7 +34,7 @@ def coop(train_dataset, config, device, prompt_template="a photo of x x"):
     classes = [cla.replace(".", " ").lower() for cla in allobj]
     attributes = [attr.replace(".", " ").lower() for attr in allattrs]
     concerned_pairs = train_dataset.concerned_pairs
-    compositions = [f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}" for pair in concerned_pairs]
+    compositions = [f"{attributes[pair[0]]} {classes[pair[1]]}" for pair in concerned_pairs]
 
     tokenized = torch.cat(
         [
@@ -90,7 +90,8 @@ class COOP(CLIPInterface):
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
-        self.comp_token_embedding = comp_token_embedding#.type(clip_model.dtype)
+        self.start_token_embedding = comp_token_embedding[0,:]
+        self.comp_token_embedding = comp_token_embedding[1:,:]#.type(clip_model.dtype)
         self.offset = offset
         self.ctx_len = len(self.soft_embeddings)
 
@@ -100,10 +101,7 @@ class COOP(CLIPInterface):
         attr_idx, obj_idx = pair_idx[:, 0], pair_idx[:, 1]
         class_token_ids = self.token_ids.repeat(len(pair_idx), 1)
 
-        token_tensor = self.comp_token_embedding.data.to(self.device)
+        token_tensor = torch.hstack([self.start_token_embedding.data, self.soft_embeddings, self.comp_token_embedding.data])
 
-        token_tensor[
-            :, 1 :self.ctx_len + 1, :
-        ] = self.soft_embeddings#.type(self.clip_model.dtype)
 
         return token_tensor

@@ -36,8 +36,12 @@ class CoCOOP(CoCSPInterface):
             device=device,
             enable_pos_emb=enable_pos_emb,
         )
-        self.comp_token_embedding = comp_token_embedding#.type(self.clip_model.dtype)
+        # self.comp_token_embedding = comp_token_embedding#.type(self.clip_model.dtype)
         # self.soft_embeddings = soft_embeddings.to(device)
+        self.start_token_embedding = comp_token_embedding[0, :]
+        self.comp_token_embedding = comp_token_embedding[1:, :]  # .type(clip_model.dtype)
+        self.offset = offset
+        self.ctx_len = len(self.soft_embeddings)
 
     def construct_token_tensors(self, batch_img, pair_idx):
 
@@ -67,11 +71,8 @@ class CoCOOP(CoCSPInterface):
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
-        token_tensor = self.comp_token_embedding.data.to(self.device)
+        token_tensor = torch.hstack([self.start_token_embedding.data, self.soft_embeddings, self.comp_token_embedding.data])
 
-        token_tensor[
-        :, 1: len(self.soft_embeddings) + 1, :
-        ] = self.soft_embeddings#.type(self.clip_model.dtype)
         token_tensor = token_tensor.unsqueeze(0)
         token_tensor = token_tensor.repeat(len(batch_img), 1, 1, 1)
         token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] = token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] + vctx_soft_embeddings.unsqueeze(1).expand(-1, len(attr_idx), -1, -1)  # [BS, CAND_SZ, vocab_sz, vocab_dim]
