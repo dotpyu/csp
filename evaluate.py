@@ -392,20 +392,20 @@ def compute_representations(model, test_dataset, config, device):
 
     rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
-        for batch_attr_obj in tqdm(test_pairs):
-            batch_attr_obj = batch_attr_obj.to(device)
-            token_tensors = model.construct_token_tensors(batch_attr_obj)
-            text_features = model.text_encoder(
-                model.token_ids,
-                token_tensors,
-                enable_pos_emb=model.enable_pos_emb,
-            )
+        # for batch_attr_obj in tqdm(test_pairs):
+            # batch_attr_obj = batch_attr_obj.to(device)
+        token_tensors = model.construct_token_tensors(pairs).float()
+        text_features = model.text_encoder(
+            model.token_ids,
+            token_tensors,
+            enable_pos_emb=model.enable_pos_emb,
+        )
 
-            text_features = text_features / text_features.norm(
-                dim=-1, keepdim=True
-            )
-
-            rep = torch.cat([rep, text_features], dim=0)
+        text_features = text_features / text_features.norm(
+            dim=-1, keepdim=True
+        )
+        rep = text_features
+            # rep = torch.cat([rep, text_features], dim=0)
 
     return rep
 
