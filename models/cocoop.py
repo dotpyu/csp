@@ -71,7 +71,7 @@ class CoCOOP(CoCSPInterface):
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
-        token_tensor = torch.hstack([self.start_token_embedding.data, self.soft_embeddings, self.comp_token_embedding.data])
+        token_tensor = torch.hstack([self.start_token_embedding.data, self.soft_embeddings.unsqueeze(0).expand(self.comp_token_embedding.shape[0],-1,-1), self.comp_token_embedding.data])
 
         token_tensor = token_tensor.unsqueeze(0)
         token_tensor = token_tensor.repeat(len(batch_img), 1, 1, 1)
