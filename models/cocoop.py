@@ -119,7 +119,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     )
 
     with torch.no_grad():
-        comp_token_embedding = clip_model.token_embedding(tokenized.to(device)).detach().cpu()
+        comp_token_embedding = clip_model.token_embedding(tokenized.to(device))
 
     token_ids = clip.tokenize(prompt_template,
                               context_length=config.context_length).to(device)
