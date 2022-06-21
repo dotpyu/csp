@@ -8,6 +8,7 @@ from clip_modules.interface import CLIPInterface
 from clip_modules.model_loader import load
 from collections import OrderedDict
 from models.cocsp import VisualCtxEncoder, CoCSPInterface
+from copy import deepcopy as dc
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -66,7 +67,7 @@ class CoCOOP(CoCSPInterface):
 
         # adding the correct learnable context
         # print(vctx_soft_embeddings.shape)
-        token_tensor = comp_token_embedding.clone()
+        token_tensor = dc(self.comp_token_embedding)
 
         token_tensor[
         :, 1: len(self.soft_embeddings) + 1, :
