@@ -13,7 +13,7 @@ models = ['vitb16', 'vitl14', 'r50', 'r101']
 formal_models = ['ViT-B/16', 'ViT-L/14', 'RN50', 'RN101']
 seeds = range(5)
 
-META_PATH = "/users/pyu12/data/pyu12/model/{:s}/coop_models/{:d}/soft_embeddings_{:d}.closed.json"
+META_PATH = "/users/pyu12/data/pyu12/model/{:s}/coop_models/{:d}/soft_embeddings_epoch_{:d}.closed.json"
 
 def mmain(args):
     result_list = []
