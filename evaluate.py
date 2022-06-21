@@ -391,18 +391,17 @@ def compute_coop_representations(model, test_dataset, config, device):
     # )
 
     # rep = torch.Tensor().to(device).type(model.dtype)
-    allattrs = train_dataset.attrs
-    allobj = train_dataset.objs
+    allattrs = test_dataset.attrs
+    allobj = test_dataset.objs
 
     # cleaning the classes and the attributes
     classes = [cla.replace(".", " ").lower() for cla in allobj]
     attributes = [attr.replace(".", " ").lower() for attr in allattrs]
-    concerned_pairs = train_dataset.concerned_pairs
     ctx_init = "a photo of "
     tokenized = torch.cat(
         [
             clip.tokenize(f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}", context_length=config.context_length)
-            for pair in concerned_pairs
+            for pair in pairs
         ]
     )
 
