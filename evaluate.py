@@ -368,7 +368,7 @@ class Evaluator:
         return stats
 
 
-def compute_representations(model, test_dataset, config, device):
+def compute_coop_representations(model, test_dataset, config, device):
     """Function computes the attribute-object representations using
     the text encoder.
     Args:
@@ -386,19 +386,39 @@ def compute_representations(model, test_dataset, config, device):
     pairs = torch.tensor([(attr2idx[attr], obj2idx[obj])
                          for attr, obj in test_dataset.pairs]).to(device)
 
-    test_pairs = np.array_split(
-        pairs, len(pairs) // config.text_encoder_batch_size
+    # test_pairs = np.array_split(
+    #     pairs, len(pairs) // config.text_encoder_batch_size
+    # )
+
+    # rep = torch.Tensor().to(device).type(model.dtype)
+    allattrs = train_dataset.attrs
+    allobj = train_dataset.objs
+
+    # cleaning the classes and the attributes
+    classes = [cla.replace(".", " ").lower() for cla in allobj]
+    attributes = [attr.replace(".", " ").lower() for attr in allattrs]
+    concerned_pairs = train_dataset.concerned_pairs
+    ctx_init = "a photo of "
+    tokenized = torch.cat(
+        [
+            clip.tokenize(f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}", context_length=config.context_length)
+            for pair in concerned_pairs
+        ]
     )
 
-    rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
-        # for batch_attr_obj in tqdm(test_pairs):
-            # batch_attr_obj = batch_attr_obj.to(device)
-        token_tensors = model.construct_token_tensors(pairs)
-        token_tensors = token_tensors.to(torch.float32)
+        comp_token_embedding = clip_model.token_embedding(tokenized.to(device))  # half precision
+
+    token_tensor = comp_token_embedding.data.to(self.device).to(model.soft_embeddings.dtype)
+
+    token_tensor[
+    :, 1:model.ctx_len + 1, :
+    ] = model.soft_embeddings  # .type(self.clip_model.dtype)
+    token_tensor = token_tensor.float()
+    with torch.no_grad():
         text_features = model.text_encoder(
             model.token_ids,
-            token_tensors,
+            token_tensor,
             enable_pos_emb=model.enable_pos_emb,
         )
 
@@ -723,15 +743,13 @@ if __name__ == "__main__":
         val_text_rep = clip_baseline(model, val_dataset, config, device)
         test_text_rep = clip_baseline(model, test_dataset, config, device)
     else:
-        vmodel, _ = get_model(val_dataset, config, device)
-        tmodel, _ = get_model(test_dataset, config, device)
+        model, _ = get_model(val_dataset, config, device)
         soft_embs = torch.load(config.soft_embeddings)['soft_embeddings']
-        vmodel.set_soft_embeddings(soft_embs)
-        tmodel.set_soft_embeddings(soft_embs)
+        model.set_soft_embeddings(soft_embs)
         val_text_rep = compute_representations(
-            vmodel, val_dataset, config, device)
+            model, val_dataset, config, device)
         test_text_rep = compute_representations(
-            tmodel, test_dataset, config, device)
+            model, test_dataset, config, device)
 
     print('evaluating on the validation set')
     if config.open_world and config.threshold is None:
@@ -753,7 +771,7 @@ if __name__ == "__main__":
         val_stats = None
         with torch.no_grad():
             all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-                vmodel, val_text_rep, val_dataset, device, config)
+                model, val_text_rep, val_dataset, device, config)
             for th in thresholds:
                 temp_logits = threshold_with_feasibility(
                     all_logits, val_dataset.seen_mask, threshold=th, feasiblity=unseen_scores)
@@ -783,7 +801,7 @@ if __name__ == "__main__":
             map_location='cpu')['feasibility']
         with torch.no_grad():
             all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-                vmodel, val_text_rep, val_dataset, device, config)
+                model, val_text_rep, val_dataset, device, config)
             if config.open_world:
                 print('using threshold: ', best_th)
                 all_logits = threshold_with_feasibility(
@@ -807,7 +825,7 @@ if __name__ == "__main__":
     with torch.no_grad():
         evaluator = Evaluator(test_dataset, model=None)
         all_logits, all_attr_gt, all_obj_gt, all_pair_gt = predict_logits(
-            tmodel, test_text_rep, test_dataset, device, config)
+            model, test_text_rep, test_dataset, device, config)
         if config.open_world and best_th is not None:
             print('using threshold: ', best_th)
             all_logits = threshold_with_feasibility(
