@@ -408,7 +408,7 @@ def compute_coop_representations(model, test_dataset, config, device):
     with torch.no_grad():
         comp_token_embedding = model.clip_model.token_embedding(tokenized.to(device))  # half precision
 
-    token_tensor = comp_token_embedding.data.to(self.device).to(model.soft_embeddings.dtype)
+    token_tensor = comp_token_embedding.data.to(device).to(model.soft_embeddings.dtype)
 
     token_tensor[
     :, 1:model.ctx_len + 1, :
