@@ -72,7 +72,7 @@ class CoCOOP(CoCSPInterface):
         token_tensor[
         :, 1: len(self.soft_embeddings) + 1, :
         ] = self.soft_embeddings#.type(self.clip_model.dtype)
-
+        token_tensor = token_tensor.unsqueeze(0)
         token_tensor = token_tensor.repeat(len(batch_img), 1, 1, 1)
         token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] = token_tensor[:,:, 1: len(self.soft_embeddings) + 1, :] + vctx_soft_embeddings.unsqueeze(1).expand(-1, len(attr_idx), -1, -1)  # [BS, CAND_SZ, vocab_sz, vocab_dim]
 
