@@ -395,6 +395,7 @@ def compute_representations(model, test_dataset, config, device):
         # for batch_attr_obj in tqdm(test_pairs):
             # batch_attr_obj = batch_attr_obj.to(device)
         token_tensors = model.construct_token_tensors(pairs)
+        token_tensors = token_tensors.to(torch.float32)
         text_features = model.text_encoder(
             model.token_ids,
             token_tensors,
