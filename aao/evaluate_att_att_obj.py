@@ -181,26 +181,16 @@ def compute_coop_representations(model, test_dataset, config, device):
     obj2idx = test_dataset.obj2idx
     attr2idx = test_dataset.attr2idx
 
-    alluser_attr = test_dataset.user_att_label
-    allattr = test_dataset.att_label
-    allobj = test_dataset.obj_label
 
+    pairs = [(user_attr.replace(".", " ").lower(), \
+              attr.replace(".", " ").lower(), \
+              obj.replace(".", " ").lower())
+             for user_attr, attr, obj in test_dataset.pairs]
 
-    print(test_dataset.pairs[:5])
-    pairs = torch.tensor([(attr2idx[user_attr], attr2idx[attr], obj2idx[obj]) \
-        for user_attr, attr, obj in test_dataset.pairs]).to(device)
-
-    test_pairs = np.array_split(
-        pairs, len(pairs) // config.text_encoder_batch_size
-    )
-
-    classes = [cla.replace(".", " ").lower() for cla in allobj]
-    attributes = [attr.replace(".", " ").lower() for attr in allattr]
-    user_attributes =  [attr.replace(".", " ").lower() for attr in alluser_attr]
     ctx_init = "a photo of "
     tokenized = torch.cat(
         [
-            clip.tokenize(f"{ctx_init}{user_attributes[pair[0]]} {attributes[pair[1]]} {classes[pair[2]]}", context_length=config.context_length)
+            clip.tokenize(f"{ctx_init}{pair[0]} {pair[1]} {pair[2]}", context_length=config.context_length)
             for pair in pairs
         ]
     )
