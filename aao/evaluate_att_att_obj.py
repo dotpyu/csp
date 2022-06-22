@@ -41,7 +41,7 @@ class AAODataset(Dataset):
         self.attrs, self.objs, _, _, _, _ = self.parse_split()
         self.obj2idx = {obj: idx for idx, obj in enumerate(self.objs)}
         self.attr2idx = {attr: idx for idx, attr in enumerate(self.attrs)}
-
+        self.concerned_pairs = pairs
 
     def __len__(self):
         return len(self.images)
@@ -180,6 +180,12 @@ def compute_coop_representations(model, test_dataset, config, device):
     """
     obj2idx = test_dataset.obj2idx
     attr2idx = test_dataset.attr2idx
+
+    alluser_attr = test_dataset.user_att_label
+    allattr = test_dataset.att_label
+    allobj = test_dataset.obj_label
+
+
     print(test_dataset.pairs[:5])
     pairs = torch.tensor([(attr2idx[user_attr], attr2idx[attr], obj2idx[obj]) \
         for user_attr, attr, obj in test_dataset.pairs]).to(device)
@@ -188,52 +194,39 @@ def compute_coop_representations(model, test_dataset, config, device):
         pairs, len(pairs) // config.text_encoder_batch_size
     )
 
+    classes = [cla.replace(".", " ").lower() for cla in allobj]
+    attributes = [attr.replace(".", " ").lower() for attr in allattr]
+    user_attributes =  [attr.replace(".", " ").lower() for attr in alluser_attr]
+    ctx_init = "a photo of "
+    tokenized = torch.cat(
+        [
+            clip.tokenize(f"{ctx_init}{user_attributes[pair[0]]} {attributes[pair[1]]} {classes[pair[2]]}", context_length=config.context_length)
+            for pair in pairs
+        ]
+    )
+
+    with torch.no_grad():
+        comp_token_embedding = model.clip_model.token_embedding(tokenized.to(device))  # half precision
+
+    token_tensor = comp_token_embedding.data.to(device).to(model.soft_embeddings.dtype)
+
     rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
-        for batch_attr_obj in tqdm(test_pairs):
-            batch_attr_obj = batch_attr_obj.to(device)
+        token_tensor[
+            :, 1 : len(model.soft_embeddings) + 1, :
+        ] = model.soft_embeddings.type(model.clip_model.dtype)
 
-            # compute token tensors
-            user_attr_idx = batch_attr_obj[:, 0]
-            attr_idx = batch_attr_obj[:, 1]
-            obj_idx = batch_attr_obj[:, 2]
+        text_features = model.text_encoder(
+            model.token_ids,
+            token_tensor,
+            enable_pos_emb=model.enable_pos_emb,
+        )
 
-            class_token_ids = model.token_ids.repeat(len(batch_attr_obj), 1)
-            token_tensor = model.clip_model.token_embedding(
-                class_token_ids.to(model.device)
-            ).type(model.clip_model.dtype)
+        text_features = text_features / text_features.norm(
+            dim=-1, keepdim=True
+        )
 
-            eos_idx = int(model.token_ids[0].argmax())
-            token_tensor[:, eos_idx - 3, :] = model.frozen_embeddings[
-                user_attr_idx
-            ].type(model.clip_model.dtype)
-            token_tensor[:, eos_idx - 2, :] = model.frozen_embeddings[
-                attr_idx
-            ].type(model.clip_model.dtype)
-            token_tensor[:, eos_idx - 1, :] = model.frozen_embeddings[
-                obj_idx + model.offset
-            ].type(model.clip_model.dtype)
-            # end compute token tensor
-
-            # adding the correct learnable context
-            token_tensor[
-                :, 1 : len(model.soft_embeddings) + 1, :
-            ] = model.soft_embeddings.type(model.clip_model.dtype)
-
-
-            text_features = model.text_encoder(
-                model.token_ids,
-                token_tensor,
-                enable_pos_emb=model.enable_pos_emb,
-            )
-
-            text_features = text_features / text_features.norm(
-                dim=-1, keepdim=True
-            )
-
-            rep = torch.cat([rep, text_features], dim=0)
-
-    return rep
+    return text_features
 
 
 

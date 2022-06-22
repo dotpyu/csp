@@ -29,10 +29,12 @@ se_path = {
     "cgqa": "/users/pyu12/data/bats/projects/clip-labeler/vitl14_cgqa/{:s}/soft_embeddings_epoch_{:d}.pt"
 }
 
+coop_path = "/users/pyu12/data/pyu12/model/{:s}/coop_models/{:s}/soft_embeddings_epoch_{:d}.pt"
+
 epochs = {
     'coop' : {
         'mit-states': 19,
-        'ut-zappos': 19,
+        'ut-zappos': 17,
         'cgqa': 19
     },
     'csp' : {
@@ -310,7 +312,7 @@ if __name__ == "__main__":
 
     # soft_embedding path assemble here:
 
-    if config.experiment_name != 'clip':
+    if config.experiment_name == 'csp':
         se = dc(se_path[config.dataset]).format(
             "coop_" + str(config.seed) if config.experiment_name == 'coop' else str(config.seed),
             epochs[config.experiment_name][config.dataset])
@@ -318,6 +320,8 @@ if __name__ == "__main__":
             print(f'{se} not found')
             print('code exiting!')
             exit(0)
+    if config.experiment_name == 'coop':
+        se = dc(coop_path).format(config.dataset, str(config.seed), epochs[config.experiment_name][config.dataset])
 
     dataset_path = DATASET_PATHS[config.dataset]
 
