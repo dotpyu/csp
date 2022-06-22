@@ -33,7 +33,7 @@ def coop(train_dataset, config, device, prompt_template="a photo of x x"):
     # cleaning the classes and the attributes
     classes = [cla.replace(".", " ").lower() for cla in allobj]
     attributes = [attr.replace(".", " ").lower() for attr in allattrs]
-    concerned_pairs = train_dataset.concerned_pairs
+    concerned_pairs = train_dataset.concerned_pairs if train_dataset.concerned_pairs else [(0,0)]
     compositions = [f"{attributes[pair[0]]} {classes[pair[1]]}" for pair in concerned_pairs]
 
     tokenized = torch.cat(

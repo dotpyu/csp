@@ -41,7 +41,7 @@ class AAODataset(Dataset):
         self.attrs, self.objs, _, _, _, _ = self.parse_split()
         self.obj2idx = {obj: idx for idx, obj in enumerate(self.objs)}
         self.attr2idx = {attr: idx for idx, attr in enumerate(self.attrs)}
-        self.concerned_pairs = pairs
+        self.concerned_pairs = None
 
     def __len__(self):
         return len(self.images)
