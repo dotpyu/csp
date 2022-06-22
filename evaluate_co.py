@@ -495,6 +495,24 @@ def predict_vctx_logits(model, dataset, device, config):
     pairs = torch.tensor([(attr2idx[attr], obj2idx[obj])
                           for attr, obj in dataset.pairs]).to(device)
 
+    allattrs = test_dataset.attrs
+    allobj = test_dataset.objs
+
+    # cleaning the classes and the attributes
+    classes = [cla.replace(".", " ").lower() for cla in allobj]
+    attributes = [attr.replace(".", " ").lower() for attr in allattrs]
+    ctx_init = "a photo of "
+    tokenized = torch.cat(
+        [
+            clip.tokenize(f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}", context_length=config.context_length)
+            for pair in pairs
+        ]
+    )
+
+    with torch.no_grad():
+        comp_token_embedding = model.clip_model.token_embedding(tokenized.to(device))  # half precisio
+
+    model.comp_token_embedding = comp_token_embedding    
 
     dataloader = DataLoader(
         dataset,
