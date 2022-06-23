@@ -7,18 +7,19 @@ import tqdm
 
 META_PATH = "/users/pyu12/data/pyu12/model/{:s}/coop_models/{:d}/soft_embeddings_epoch_{:d}.pt"
 
-datasets = ['ut-zappos', 'mit-states', 'cgqa']#, 'mit-states'] #, 'cgqa'
+datasets = ['cgqa']#['ut-zappos', 'mit-states', 'cgqa']#, 'mit-states'] #, 'cgqa'
 data_cap = ['ut', 'c', 'mit']
 models = ['vitb16', 'vitl14', 'r50', 'r101']
 formal_models = ['ViT-B/16', 'ViT-L/14', 'RN50', 'RN101']
 seeds = range(5)
 
+thresh = [0.4069159426, 0.5299109123, 0.49937106273612186]
 
 def check(dataset, seed, epoch=1):
     return exists(META_PATH.format(dataset, seed, epoch))
 
 cl = ["16", "12", "16"]#["16", "12"] # 16
-
+cl = ["16"]
 def subproc(dataset, seed, epoch):
     #abbr = data_cap[datasets.index(dataset)]
     #fmodel = formal_models[models.index(model)]
@@ -31,6 +32,7 @@ def subproc(dataset, seed, epoch):
                     "--context_length", cl[datasets.index(dataset)],
                     "--text_encoder_batch_size", "36",
                     "--eval_batch_size", "16",
+                    "--threshold", str(thresh[2]),
                     "--open_world"
                     ])
 

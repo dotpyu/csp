@@ -35,7 +35,7 @@ epochs = {
     'coop' : {
         'mit-states': 19,
         'ut-zappos': 17,
-        'cgqa': 19
+        'cgqa': 9
     },
     'csp' : {
         'mit-states': 20,
