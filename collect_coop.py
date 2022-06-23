@@ -4,7 +4,7 @@ from scipy.stats import sem
 import numpy as np
 import os
 
-META_PATH = "/users/pyu12/data/pyu12/model/{:s}/coop_models/{:d}/soft_embeddings_epoch_{:d}.pt"
+META_PATH = "/users/pyu12/data/pyu12/model/{:s}/coop_models/{:d}/soft_embeddings_epoch_{:d}.closed.json"
 
 cc_name = '{:s}_{:s}_seed_{:d}__{:s}.json'
 clip_name = 'clip_{:s}__{:s}.json'
