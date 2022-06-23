@@ -34,7 +34,7 @@ def mmain(args):
                     continue
                 val_results[epoch, i] = results['val'][crit]
                 test = results['test']
-                auc, bhm, bu, bs = test['AUC']*100, test['best_hm']*100, test['best_seen']*100, test['best_unseen']*100
+                auc, bhm, bu, bs = test['AUC']*100, test['best_hm']*100, test['best_unseen']*100, test['best_seen']*100
                 test_results[epoch, i, :] = np.array([bs, bu, bhm, auc])
     best_epoch_val = np.argmax(np.mean(val_results, axis=1))
     best_test = test_results[best_epoch_val, :, :]
