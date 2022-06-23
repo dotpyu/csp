@@ -25,7 +25,7 @@ except ModuleNotFoundError:
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-def train_model(model, optimizer, train_dataset, config, device):
+def train_model(model, optimizer, train_dataset, config, device, epoch_offset=0):
     """Function to train the model to predict attributes with cross entropy loss.
 
     Args:
@@ -61,7 +61,7 @@ def train_model(model, optimizer, train_dataset, config, device):
     if config.amp:
         scaler = amp.GradScaler()
 
-    for i in range(config.epochs):
+    for i in range(epoch_offset, epoch_offset+config.epochs):
         progress_bar = tqdm.tqdm(
             total=len(train_dataloader), desc="epoch % 3d" % (i + 1)
         )
@@ -192,6 +192,13 @@ if __name__ == "__main__":
         help="directly evaluate on the" "dataset without any training",
         action="store_true",
     )
+
+    parser.add_argument(
+        "--continue_ckpt",
+        help="continue previous training course",
+        action="store_true",
+    )
+
     parser.add_argument(
         "--context_length",
         help="sets the context length of the clip model",
@@ -254,12 +261,40 @@ if __name__ == "__main__":
     print("soft embedding dtype", model.soft_embeddings.dtype)
 
     if not config.evaluate_only:
+        epoch_offset = 0
+        if config.continue_ckpt:
+            # automatically discover ckpt
+            vctx_version = -1
+            se_version = -1
+            se_path_template = config.save_path + "/soft_embeddings_epoch_{:d}.pt"
+            for i in range(config.epochs):
+                if os.path.exists(dc(se_path_template).format(i+1)):
+                    se_version = i+1 # 1-indexed epoch
+                else: break
+            if se_version != -1:
+                if config.experiment_name == 'cocoop' or 'cocsp':
+                    vctx_template = config.save_path + "/vctx_epoch_{:d}.pt"
+                    for i in range(config.epochs):
+                        if os.path.exists(dc(vctx_template).format(i + 1)):
+                            vctx_version = i + 1  # 1-indexed epoch
+                        else:
+                            break
+                    final_version = min(se_version, vctx_version)
+                    vctx_path = dc(vctx_template).format(final_version)
+                    model.load_vctx_encoder(torch.load(vctx_path)['vis_context_encoder'])
+                else: final_version = se_version
+                se_path = dc(se_path_template).format(final_version)
+                se = torch.load(se_path)['soft_embeddings']
+                model.set_soft_embeddings(se)
+            epoch_offset = final_version
+
         model, optimizer = train_model(
             model,
             optimizer,
             train_dataset,
             config,
             device,
+            epoch_offset = epoch_offset,
         )
 
     save_soft_embeddings(
