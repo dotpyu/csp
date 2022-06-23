@@ -35,7 +35,7 @@ epochs = {
     'coop' : {
         'mit-states': 19,
         'ut-zappos': 17,
-        'cgqa': 9
+        'cgqa': 19
     },
     'csp' : {
         'mit-states': 20,
@@ -210,6 +210,43 @@ def clip_baseline(model, test_dataset, config, device):
 
 
 
+def save_results(test_dataset, config, prefix=""):
+    if config.experiment_name == 'clip':
+        clip_model, preprocess = load(
+            config.clip_model, device=device, context_length=config.context_length)
+
+        model = CLIPInterface(
+            clip_model,
+            config,
+            token_ids=None,
+            device=device,
+            enable_pos_emb=True)
+        test_text_rep = clip_baseline(model, test_dataset, config, device)
+    else:
+        model, optimizer = get_model(val_dataset, config, device)
+        soft_embs = torch.load(se)['soft_embeddings']
+        model.set_soft_embeddings(soft_embs)
+        if config.experiment_name == 'csp':
+            test_text_rep = compute_csp_representations(
+                model, test_dataset, config, device)
+        elif config.experiment_name == 'coop':
+            test_text_rep = compute_coop_representations(
+                model, test_dataset, config, device)
+
+    logits, gt = predict_logits(model, test_text_rep, test_dataset, device, config)
+    target = test_dataset.objs if config.eval_obj else test_dataset.attrs
+    top_res = {i: topk(gt, logits, k=i, labels=list(range(len(target)))) for i in [1, 2, 3, 5, 10, 20]}
+    suffix = '_obj' if config.eval_obj else '_attr'
+
+    if config.alter_attr: suffix += '_alter'
+    if config.experiment_name != 'clip':
+        result_path = './vocab_results/{:s}{:s}_{:s}_seed_{:d}_{:s}.json'.format(prefix, config.experiment_name, config.dataset, config.seed, suffix)
+    else:
+        result_path = './vocab_results/{:s}clip_{:s}_{:s}.json'.format(prefix, config.dataset, suffix)
+
+    with open(result_path, 'w+') as fp:
+        json.dump(top_res, fp)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -327,10 +364,12 @@ if __name__ == "__main__":
     dataset_path = DATASET_PATHS[config.dataset]
 
     print('loading train dataset')
-    test_dataset = CompositionDataset(dataset_path,
+    train_dataset = CompositionDataset(dataset_path,
                                      phase='train',
                                      split='compositional-split-natural',
                                      open_world=False)
+    save_results(train_dataset, config, prefix='train')
+
 
     print('loading test dataset')
     # test_dataset = CompositionDataset(dataset_path,
@@ -339,41 +378,12 @@ if __name__ == "__main__":
     #                                   open_world=False)
 
     # True attr/obj labels loaded from test/val dataset
+    test_dataset = CompositionDataset(dataset_path,
+                                       phase='test',
+                                       split='compositional-split-natural',
+                                       open_world=False)
+    save_results(test_dataset, config, prefix='')
 
-    if config.experiment_name == 'clip':
-        clip_model, preprocess = load(
-            config.clip_model, device=device, context_length=config.context_length)
 
-        model = CLIPInterface(
-            clip_model,
-            config,
-            token_ids=None,
-            device=device,
-            enable_pos_emb=True)
-        test_text_rep = clip_baseline(model, test_dataset, config, device)
-    else:
-        model, optimizer = get_model(val_dataset, config, device)
-        soft_embs = torch.load(se)['soft_embeddings']
-        model.set_soft_embeddings(soft_embs)
-        if config.experiment_name == 'csp':
-            test_text_rep = compute_csp_representations(
-                model, test_dataset, config, device)
-        elif config.experiment_name == 'coop':
-            test_text_rep = compute_coop_representations(
-                model, test_dataset, config, device)
-
-    logits, gt = predict_logits(model, test_text_rep, test_dataset, device, config)
-    target = test_dataset.objs if config.eval_obj else test_dataset.attrs
-    top_res = {i: topk(gt, logits, k=i, labels=list(range(len(target)))) for i in [1, 2, 3, 5, 10, 20]}
-    suffix = '_obj' if config.eval_obj else '_attr'
-
-    if config.alter_attr: suffix += '_alter'
-    if config.experiment_name != 'clip':
-        result_path = './vocab_results/train_{:s}_{:s}_seed_{:d}_{:s}.json'.format(config.experiment_name, config.dataset, config.seed, suffix)
-    else:
-        result_path = './vocab_results/train_clip_{:s}_{:s}.json'.format(config.dataset, suffix)
-
-    with open(result_path, 'w+') as fp:
-        json.dump(top_res, fp)
 
     print("done!")
