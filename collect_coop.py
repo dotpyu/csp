@@ -43,6 +43,7 @@ def load_acc(path):
     if os.path.exists(path):
         try:
             results = json.load(open(path))
+            print(results)
             return results['AUC']*100, results['best_hm']*100, results['best_unseen']*100, results['best_seen']*100
         except Exception as e:
             print(e)
