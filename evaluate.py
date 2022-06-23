@@ -390,7 +390,7 @@ def compute_coop_representations(model, test_dataset, config, device):
     #     pairs, len(pairs) // config.text_encoder_batch_size
     # )
 
-    # rep = torch.Tensor().to(device).type(model.dtype)
+    #
     allattrs = test_dataset.attrs
     allobj = test_dataset.objs
 
@@ -398,34 +398,41 @@ def compute_coop_representations(model, test_dataset, config, device):
     classes = [cla.replace(".", " ").lower() for cla in allobj]
     attributes = [attr.replace(".", " ").lower() for attr in allattrs]
     ctx_init = "a photo of "
-    tokenized = torch.cat(
-        [
-            clip.tokenize(f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}", context_length=config.context_length)
-            for pair in pairs
-        ]
+
+    test_pairs = np.array_split(
+        pairs, len(pairs) // config.text_encoder_batch_size
     )
-
+    rep = torch.Tensor().to(device).type(model.dtype)
     with torch.no_grad():
-        comp_token_embedding = model.clip_model.token_embedding(tokenized.to(device))  # half precision
+        for batched_pairs in test_pairs:
+            tokenized = torch.cat(
+                [
+                    clip.tokenize(f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}",
+                                  context_length=config.context_length)
+                    for pair in batched_pairs
+                ]
+            )
 
-    token_tensor = comp_token_embedding.data.to(device).to(model.soft_embeddings.dtype)
+            with torch.no_grad():
+                comp_token_embedding = model.clip_model.token_embedding(tokeniezd.to(device))  # half precision
 
-    token_tensor[
-    :, 1:model.ctx_len + 1, :
-    ] = model.soft_embeddings  # .type(self.clip_model.dtype)
-    token_tensor = token_tensor.float()
-    with torch.no_grad():
-        text_features = model.text_encoder(
-            model.token_ids,
-            token_tensor,
-            enable_pos_emb=model.enable_pos_emb,
-        )
+                token_tensor = comp_token_embedding.data.to(device).to(model.soft_embeddings.dtype)
 
-        text_features = text_features / text_features.norm(
-            dim=-1, keepdim=True
-        )
-        rep = text_features
-            # rep = torch.cat([rep, text_features], dim=0)
+                token_tensor[
+                :, 1:model.ctx_len + 1, :
+                ] = model.soft_embeddings  # .type(self.clip_model.dtype)
+                token_tensor = token_tensor.float()
+
+                text_features = model.text_encoder(
+                    model.token_ids,
+                    token_tensor,
+                    enable_pos_emb=model.enable_pos_emb,
+                )
+
+                text_features = text_features / text_features.norm(
+                    dim=-1, keepdim=True
+                )
+                rep = torch.cat([rep, text_features], dim=0)
 
     return rep
 
