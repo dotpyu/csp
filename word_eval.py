@@ -223,7 +223,7 @@ def save_results(test_dataset, config, prefix=""):
             enable_pos_emb=True)
         test_text_rep = clip_baseline(model, test_dataset, config, device)
     else:
-        model, optimizer = get_model(val_dataset, config, device)
+        model, optimizer = get_model(test_dataset, config, device)
         soft_embs = torch.load(se)['soft_embeddings']
         model.set_soft_embeddings(soft_embs)
         if config.experiment_name == 'csp':
