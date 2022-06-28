@@ -289,7 +289,7 @@ if __name__ == "__main__":
                     torch.cuda.empty_cache()
                 se_path = dc(se_path_template).format(final_version)
                 se = torch.load(se_path, map_location='cpu')['soft_embeddings']
-                model.soft_embeddings = nn.Parameter(se).to(model.device)
+                model.soft_embeddings = torch.nn.Parameter(se).to(model.device)
             epoch_offset = final_version
 
         model, optimizer = train_model(
