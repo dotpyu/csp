@@ -263,7 +263,7 @@ if __name__ == "__main__":
     if not config.evaluate_only:
         epoch_offset = 0
         if config.continue_ckpt:
-            # automatically discover ckpt
+            # automatically discover ckpt, only supports co* for now
             vctx_version = -1
             se_version = -1
             se_path_template = config.save_path + "/soft_embeddings_epoch_{:d}.pt"
@@ -273,6 +273,7 @@ if __name__ == "__main__":
                 else: break
             if se_version != -1:
                 if config.experiment_name == 'cocoop' or 'cocsp':
+                    model.reset_trainables()
                     vctx_template = config.save_path + "/vctx_epoch_{:d}.pt"
                     for i in range(config.epochs):
                         if os.path.exists(dc(vctx_template).format(i + 1)):
@@ -282,7 +283,10 @@ if __name__ == "__main__":
                     final_version = min(se_version, vctx_version)
                     vctx_path = dc(vctx_template).format(final_version)
                     model.load_vctx_encoder(torch.load(vctx_path, map_location='cpu')['vis_context_encoder'])
-                else: final_version = se_version
+                else:
+                    final_version = se_version
+                    model.self_embeddings = None
+                    torch.cuda.empty_cache()
                 se_path = dc(se_path_template).format(final_version)
                 se = torch.load(se_path, map_location='cpu')['soft_embeddings']
                 model.set_soft_embeddings(se)

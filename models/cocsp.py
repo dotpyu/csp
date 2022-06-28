@@ -1,5 +1,5 @@
 import os
-
+import gc
 import clip
 import pandas as pd
 import torch
@@ -59,6 +59,12 @@ class CoCSPInterface(CLIPInterface):
         self.vctx_encoder = vctx_encoder.to(self.device)
         #self.text_encoder = self.text_encoder.to(self.dtype)
         # self.soft_embeddings = self.soft_embeddings.to(self.device)
+
+    def reset_trainables(self):
+        self.vctx_encoder = None
+        self.soft_embeddings = None
+        gc.collect()
+        torch.cuda.empty_cache()
 
     def load_vctx_encoder(self, vctx_encoder):
         self.vctx_encoder = vctx_encoder.to(self.device)
