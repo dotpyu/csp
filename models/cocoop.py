@@ -141,13 +141,13 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
                         break
                 final_version = min(se_version, vctx_version)
                 vctx_path = dc(vctx_template).format(final_version)
-                vctx_encoder = torch.load(vctx_path)['vis_context_encoder'].half()
+                vctx_encoder = torch.load(vctx_path)['vis_context_encoder']
             else:
                 final_version = se_version
                 model.self_embeddings = None
                 torch.cuda.empty_cache()
             se_path = dc(se_path_template).format(final_version)
-            soft_embedding = torch.load(se_path, map_location='cpu')['soft_embeddings'].half()
+            soft_embedding = torch.load(se_path, map_location='cpu')['soft_embeddings']
             soft_embedding = nn.Parameter(ctx_vectors).to(device)
 
             # soft_embedding = soft_embedding.to(torch.float16)
