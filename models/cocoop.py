@@ -147,7 +147,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
                 torch.cuda.empty_cache()
             se_path = dc(se_path_template).format(final_version)
             soft_embedding = torch.load(se_path)['soft_embeddings']
-            soft_embedding = soft_embedding.to(torch.float16)
+            # soft_embedding = soft_embedding.to(torch.float16)
         model_epoch_offset = final_version
     else:
         soft_embedding = nn.Parameter(ctx_vectors).to(device)
