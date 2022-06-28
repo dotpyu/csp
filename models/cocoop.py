@@ -107,6 +107,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     attributes = [attr.replace(".", " ").lower() for attr in allattrs]
     concerned_pairs = train_dataset.concerned_pairs
 
+
     tokenized = torch.cat(
         [
             clip.tokenize(f"{ctx_init}{attributes[pair[0]]} {classes[pair[1]]}", context_length=config.context_length)
@@ -150,6 +151,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
             soft_embedding = nn.Parameter(ctx_vectors).to(device)
 
             # soft_embedding = soft_embedding.to(torch.float16)
+            print('Continuing from epoch {}'.format(final_version))
         model_epoch_offset = final_version
     else:
         soft_embedding = nn.Parameter(ctx_vectors).to(device)
