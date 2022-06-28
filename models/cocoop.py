@@ -99,9 +99,6 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
         embedding = clip_model.token_embedding(prompt)
 
     ctx_vectors = embedding[0, 1: 1 + n_ctx, :]
-
-    soft_embedding = nn.Parameter(ctx_vectors).to(device)
-
     allattrs = train_dataset.attrs
     allobj = train_dataset.objs
 
@@ -123,11 +120,42 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
     token_ids = clip.tokenize(prompt_template,
                               context_length=config.context_length).to(device)
 
+    if config.continue_ckpt:
+        # automatically discover ckpt, only supports co* for now
+        vctx_version = -1
+        se_version = -1
+        se_path_template = config.save_path + "/soft_embeddings_epoch_{:d}.pt"
+        for i in range(config.epochs):
+            if os.path.exists(dc(se_path_template).format(i + 1)):
+                se_version = i + 1  # 1-indexed epoch
+            else:
+                break
+        if se_version != -1:
+            if config.experiment_name == 'cocoop' or 'cocsp':
+                vctx_template = config.save_path + "/vctx_epoch_{:d}.pt"
+                for i in range(config.epochs):
+                    if os.path.exists(dc(vctx_template).format(i + 1)):
+                        vctx_version = i + 1  # 1-indexed epoch
+                    else:
+                        break
+                final_version = min(se_version, vctx_version)
+                vctx_path = dc(vctx_template).format(final_version)
+                vctx_encoder = torch.load(vctx_path)['vis_context_encoder']
+            else:
+                final_version = se_version
+                model.self_embeddings = None
+                torch.cuda.empty_cache()
+            se_path = dc(se_path_template).format(final_version)
+            soft_embedding = torch.load(se_path)['soft_embeddings']
+        model_epoch_offset = final_version
+    else:
+        soft_embedding = nn.Parameter(ctx_vectors).to(device)
 
-    vocab_sz = soft_embedding.shape[-2]
-    vis_dim = soft_embedding.shape[-1]
+        vocab_sz = soft_embedding.shape[-2]
+        vis_dim = soft_embedding.shape[-1]
 
-    vctx_encoder = VisualCtxEncoder(vis_dim, ctx_vectors.shape[-1], dtype=torch.float32).to(device)
+        vctx_encoder = VisualCtxEncoder(vis_dim, ctx_vectors.shape[-1], dtype=torch.float32).to(device)
+        model_epoch_offset = 0
 
     offset = len(attributes)
 
@@ -135,7 +163,7 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
         [soft_embedding]+ list(vctx_encoder.parameters()), lr=config.lr, weight_decay=config.weight_decay
     )
 
-    coop = CoCOOP(
+    cocoop = CoCOOP(
         clip_model,
         config,
         offset,
@@ -146,5 +174,6 @@ def get_cocoop(train_dataset, config, device, prompt_template="a photo of x x"):
         device=device,
         enable_pos_emb=True,
     )
+    cocoop.epoch_offset = model_epoch_offset
 
-    return coop, optimizer
+    return cocoop, optimizer

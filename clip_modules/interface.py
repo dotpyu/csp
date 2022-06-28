@@ -62,6 +62,8 @@ class CLIPInterface(torch.nn.Module):
         self.token_ids = token_ids
         self.soft_embeddings = soft_embeddings
 
+        self.epoch_offset = 0
+
     def encode_image(self, imgs):
         return self.clip_model.encode_image(imgs.to(self.dtype))
 
