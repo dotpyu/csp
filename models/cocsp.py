@@ -62,7 +62,7 @@ class CoCSPInterface(CLIPInterface):
 
     def reset_trainables(self):
         self.vctx_encoder = None
-        self.soft_embeddings = None
+        # self.soft_embeddings = None
         gc.collect()
         torch.cuda.empty_cache()
 
