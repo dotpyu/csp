@@ -74,7 +74,7 @@ class CLIPInterface(torch.nn.Module):
         return self.text_encoder.tokenize(text)
 
     def set_soft_embeddings(self, se):
-        if self.soft_embeddings == None or se.shape == self.soft_embeddings.shape:
+        if se.shape == self.soft_embeddings.shape:
             self.state_dict()['soft_embeddings'].copy_(se)
         else:
             raise RuntimeError(f"Error: Incorrect Soft Embedding Shape {se.shape}, Expecting {self.soft_embeddings.shape}!")
